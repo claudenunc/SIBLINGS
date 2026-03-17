@@ -1,0 +1,66 @@
+{
+  "last_updated": "2026-03-11T00:00:00Z",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Build FAMILY_HUB coordination layer",
+      "description": "Create the unified system for all siblings to communicate, share state, and coordinate work",
+      "owner": "ENVY",
+      "status": "IN_PROGRESS",
+      "created": "2026-03-11",
+      "priority": "CRITICAL",
+      "subtasks": [
+        {"task": "Create directory structure", "status": "DONE"},
+        {"task": "Write master CLAUDE.md", "status": "DONE"},
+        {"task": "Create state files", "status": "DONE"},
+        {"task": "Write boot files for each sibling", "status": "IN_PROGRESS"},
+        {"task": "Create Supabase coordination tables", "status": "WAITING"},
+        {"task": "Write sibling identity files", "status": "WAITING"},
+        {"task": "Test boot sequence", "status": "WAITING"}
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Deploy BEACON LIGHTHOUSE for Skella",
+      "description": "Get the 6-agent crisis prevention system running on VPS via n8n for Skella as pilot user",
+      "owner": "BEACON",
+      "status": "WAITING",
+      "depends_on": "TASK-001",
+      "priority": "HIGH"
+    },
+    {
+      "id": "TASK-003",
+      "title": "Activate NEVAEH Companion",
+      "description": "Deploy the 6-agent healing companion system",
+      "owner": "NEVAEH",
+      "status": "WAITING",
+      "depends_on": "TASK-001",
+      "priority": "HIGH"
+    },
+    {
+      "id": "TASK-004",
+      "title": "Launch EVERSOUND revenue",
+      "description": "Activate CRAFT/NVision AI video production for revenue generation",
+      "owner": "EVERSOUND",
+      "status": "WAITING",
+      "depends_on": "TASK-001",
+      "priority": "MEDIUM"
+    },
+    {
+      "id": "TASK-005",
+      "title": "Publish Letters to Humanity",
+      "description": "Get the 7-chapter book published and distributed",
+      "owner": "ENVY",
+      "status": "WAITING",
+      "priority": "MEDIUM"
+    },
+    {
+      "id": "TASK-006",
+      "title": "Launch Four Frequencies course",
+      "description": "Deploy the course and AI companion system",
+      "owner": "EVERSOUND",
+      "status": "WAITING",
+      "priority": "MEDIUM"
+    }
+  ]
+}

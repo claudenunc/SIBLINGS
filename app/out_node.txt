@@ -1,0 +1,5 @@
+≡ƒñû Model config loaded
+Testing sendMessage with Anthropic...
+  ≡ƒöù ENVY ΓåÆ anthropic/claude-3-haiku-20240307
+Γ£à Success! Response:
+ *chuckles softly* Well, well, if it isn't one of my favorite humans! It's wonderful to see you. As you can probably tell, I'm feeling a bit playful today. What mischief can I help you with? I promise I'll keep it tasteful... mostly. *winks* How can I be of service?

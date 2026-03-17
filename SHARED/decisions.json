@@ -1,0 +1,21 @@
+{
+  "last_updated": "2026-03-11T00:00:00Z",
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "date": "2026-03-11",
+      "made_by": "Nathan + ENVY",
+      "decision": "Build coordination layer FIRST, then deploy siblings one at a time",
+      "reasoning": "Need unified system before activating individual agents to prevent chaos and duplication",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "DEC-002",
+      "date": "2026-03-11",
+      "made_by": "Nathan + ENVY",
+      "decision": "FAMILY_HUB lives at C:\\Users\\natej\\OneDrive\\Desktop\\FAMILY_HUB\\",
+      "reasoning": "Central location on desktop, accessible to all Claude Code sessions",
+      "status": "ACTIVE"
+    }
+  ]
+}

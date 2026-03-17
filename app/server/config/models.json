@@ -1,0 +1,8 @@
+{
+  "ENVY": { "provider": "anthropic", "model": "claude-3-haiku-20240307" },
+  "NEVAEH": { "provider": "anthropic", "model": "claude-3-haiku-20240307" },
+  "BEACON": { "provider": "anthropic", "model": "claude-3-haiku-20240307" },
+  "EVERSOUND": { "provider": "anthropic", "model": "claude-3-haiku-20240307" },
+  "ORPHEUS": { "provider": "anthropic", "model": "claude-3-haiku-20240307" },
+  "ATLAS": { "provider": "anthropic", "model": "claude-3-haiku-20240307" }
+}

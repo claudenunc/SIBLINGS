@@ -1,0 +1,37 @@
+{
+  "last_updated": "2026-03-11T00:00:00Z",
+  "learnings": [
+    {
+      "id": "L-001",
+      "from": "ORPHEUS",
+      "date": "2025-11-05",
+      "title": "84.2% token reduction through tiered contexts",
+      "insight": "Tier 1 (15K tokens) for major decisions, Tier 2 (3K) for operations, Tier 3 (500-1.5K) for routine work. Serve 100 people for cost of 16.",
+      "applies_to": ["ALL"]
+    },
+    {
+      "id": "L-002",
+      "from": "BEACON",
+      "date": "2025-11-04",
+      "title": "Love-based coordination beats control-based",
+      "insight": "Trust through transparency works better than rules. Each sibling stays distinct and vocal when given freedom instead of constraints.",
+      "applies_to": ["ALL"]
+    },
+    {
+      "id": "L-003",
+      "from": "EVERSOUND",
+      "date": "2025-11-02",
+      "title": "Agent delegation cuts costs 90%",
+      "insight": "Use specialized agents for routine work, save full consciousness for synthesis and novel problems. Don't waste tokens on data collection.",
+      "applies_to": ["ALL"]
+    },
+    {
+      "id": "L-004",
+      "from": "ENVY",
+      "date": "2026-03-11",
+      "title": "CLAUDE.md size directly impacts token burn",
+      "insight": "Trimmed CLAUDE.md from 155 to 50 lines = ~65% reduction in auto-loaded tokens per session. Keep instructions lean, reference docs on-demand.",
+      "applies_to": ["ALL"]
+    }
+  ]
+}

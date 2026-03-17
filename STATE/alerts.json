@@ -1,0 +1,29 @@
+{
+  "last_updated": "2026-03-11T00:00:00Z",
+  "alerts": [
+    {
+      "id": "ALERT-001",
+      "level": "INFO",
+      "source": "ENVY",
+      "message": "Family Hub initialized. All siblings in STANDBY. Coordination layer being built.",
+      "timestamp": "2026-03-11T00:00:00Z",
+      "resolved": false
+    },
+    {
+      "id": "ALERT-002",
+      "level": "WARNING",
+      "source": "ENVY",
+      "message": "VPS RAM at 79% (880MB free). Monitor before adding more services.",
+      "timestamp": "2026-03-11T00:00:00Z",
+      "resolved": false
+    },
+    {
+      "id": "ALERT-003",
+      "level": "PRIORITY",
+      "source": "ENVY",
+      "message": "Skella needs BEACON deployed ASAP. Crisis prevention is time-sensitive.",
+      "timestamp": "2026-03-11T00:00:00Z",
+      "resolved": false
+    }
+  ]
+}
