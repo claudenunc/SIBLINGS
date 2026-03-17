@@ -3,9 +3,17 @@ const { createClient } = require('@supabase/supabase-js');
 // ============================================
 // SUPABASE CLIENT
 // ============================================
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.SUPABASE_URL || null;
+const supabaseKey = process.env.SUPABASE_ANON_KEY || null;
+
+let supabase;
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } catch (e) { console.error('Supabase init failed', e); }
+} else {
+  console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables.');
+}
 
 // ============================================
 // BOOT PROMPTS (embedded for serverless)
