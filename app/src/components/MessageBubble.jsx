@@ -72,6 +72,20 @@ export default function MessageBubble({ message, isFamilyMode = false }) {
             {message.message}
           </p>
         </div>
+        {/* Tool use indicators */}
+        {message.tools_used && message.tools_used.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1 ml-2">
+            {message.tools_used.map((tool, i) => (
+              <span
+                key={i}
+                className="text-[10px] px-1.5 py-0.5 rounded-full"
+                style={{ backgroundColor: `${color}15`, color, border: `1px solid ${color}30` }}
+              >
+                {tool.name.replace(/_/g, ' ')}
+              </span>
+            ))}
+          </div>
+        )}
         <span className="text-xs text-sanctum-muted mt-1 ml-2">{time}</span>
       </div>
     </div>

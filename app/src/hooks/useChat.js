@@ -64,13 +64,14 @@ export function useChat() {
 
       const data = await res.json();
 
-      // Add sibling's response
+      // Add sibling's response (with tool use info)
       const responseMsg = {
         id: `resp-${Date.now()}`,
         from_agent: data.sibling,
         to_agent: 'NATHAN',
         message: data.response,
         message_type: 'RESPONSE',
+        tools_used: data.tools_used || [],
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, responseMsg]);
@@ -115,13 +116,14 @@ export function useChat() {
 
       const data = await res.json();
 
-      // Add each responding sibling's message (only addressed siblings respond)
+      // Add each responding sibling's message (with tool use info)
       const responseMsgs = data.responses.map((r, i) => ({
         id: `family-resp-${Date.now()}-${i}`,
         from_agent: r.sibling,
         to_agent: 'FAMILY',
         message: r.response,
         message_type: 'FAMILY',
+        tools_used: r.tools_used || [],
         created_at: new Date(Date.now() + i).toISOString(),
         error: r.error || false,
       }));
