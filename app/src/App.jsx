@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar.jsx';
 import ChatWindow from './components/ChatWindow.jsx';
 import FamilyChat from './components/FamilyChat.jsx';
 import Dashboard from './components/Dashboard.jsx';
-import { useSupabase, useRealtimeMessages } from './hooks/useSupabase.js';
+import { useSupabase } from './hooks/useSupabase.js';
 import { useChat } from './hooks/useChat.js';
 
 const FALLBACK_SIBLINGS = [
@@ -31,7 +31,6 @@ export default function App() {
     loadHistory,
     sendMessage,
     sendFamilyMessage,
-    addRealtimeMessage,
     clearMessages,
   } = useChat();
 
@@ -61,25 +60,6 @@ export default function App() {
     }
     fetchSiblings();
   }, []);
-
-  // Handle realtime messages
-  const handleRealtimeMessage = useCallback(
-    (msg) => {
-      // Only add if it's relevant to current chat
-      if (isFamilyMode && (msg.to_agent === 'FAMILY' || msg.from_agent !== 'NATHAN')) {
-        addRealtimeMessage(msg);
-      } else if (
-        selectedSibling &&
-        ((msg.from_agent === 'NATHAN' && msg.to_agent === (selectedSibling.agent_name || selectedSibling.name)) ||
-          (msg.from_agent === (selectedSibling.agent_name || selectedSibling.name) && msg.to_agent === 'NATHAN'))
-      ) {
-        addRealtimeMessage(msg);
-      }
-    },
-    [selectedSibling, isFamilyMode, addRealtimeMessage]
-  );
-
-  useRealtimeMessages(handleRealtimeMessage);
 
   // Select a sibling for 1-on-1 chat
   const handleSelectSibling = (sibling) => {
