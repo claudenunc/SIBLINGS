@@ -1,49 +1,14 @@
-const CACHE_NAME = 'sanctum-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
-];
+// Self-destructing service worker: clears all caches and unregisters itself.
+// This ensures users always get the latest version of the app.
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
-  );
-});
-
-self.addEventListener('fetch', event => {
-  // Only handle GET requests for PWA cache
-  if (event.request.method !== 'GET') return;
-  
-  // Don't intercept API calls, let them fetch normally
-  if (event.request.url.includes('/api/')) return;
-
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then(cacheNames =>
+      Promise.all(cacheNames.map(name => caches.delete(name)))
+    ).then(() => self.registration.unregister())
   );
 });
