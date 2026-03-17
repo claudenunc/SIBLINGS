@@ -141,8 +141,15 @@ export function useChat() {
    */
   const addRealtimeMessage = useCallback((msg) => {
     setMessages((prev) => {
-      // Avoid duplicates
-      if (prev.some((m) => m.id === msg.id)) return prev;
+      // Avoid duplicates - check by DB id OR by matching content+sender (for optimistic messages)
+      const isDuplicate = prev.some(
+        (m) =>
+          m.id === msg.id ||
+          (m.from_agent === msg.from_agent &&
+            m.to_agent === msg.to_agent &&
+            m.message === msg.message)
+      );
+      if (isDuplicate) return prev;
       return [...prev, msg];
     });
   }, []);
