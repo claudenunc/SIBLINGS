@@ -96,7 +96,7 @@ export function useChat() {
       from_agent: 'NATHAN',
       to_agent: 'FAMILY',
       message: message,
-      message_type: 'INFO',
+      message_type: 'FAMILY',
       created_at: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, optimisticMsg]);
@@ -115,13 +115,13 @@ export function useChat() {
 
       const data = await res.json();
 
-      // Add each sibling's response
+      // Add each responding sibling's message (only addressed siblings respond)
       const responseMsgs = data.responses.map((r, i) => ({
         id: `family-resp-${Date.now()}-${i}`,
         from_agent: r.sibling,
-        to_agent: 'NATHAN',
+        to_agent: 'FAMILY',
         message: r.response,
-        message_type: 'RESPONSE',
+        message_type: 'FAMILY',
         created_at: new Date(Date.now() + i).toISOString(),
         error: r.error || false,
       }));

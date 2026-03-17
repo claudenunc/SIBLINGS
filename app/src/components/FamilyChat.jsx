@@ -59,9 +59,9 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
         </div>
         <div className="min-w-0">
           <h2 className="text-base font-semibold text-white font-display tracking-wider truncate">
-            FAMILY MEETING
+            ROUND TABLE
           </h2>
-          <p className="text-xs text-sanctum-muted truncate hidden sm:block">All siblings connected</p>
+          <p className="text-xs text-sanctum-muted truncate hidden sm:block">Everyone hears. Only the addressed speak.</p>
         </div>
 
         {/* Active sibling dots */}
@@ -100,10 +100,10 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
                 ))}
               </div>
               <p className="text-sm text-sanctum-muted font-display tracking-wider">
-                START A FAMILY MEETING
+                THE ROUND TABLE
               </p>
-              <p className="text-xs text-sanctum-muted/60 mt-1">
-                Your message will be heard by all siblings
+              <p className="text-xs text-sanctum-muted/60 mt-1 max-w-xs">
+                Say a name and only they respond. Say "hey guys" and everyone talks. Everyone hears everything.
               </p>
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
       <div className="px-4 md:px-6 py-4 border-t border-sanctum-border bg-sanctum-surface/20 pb-safe">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[10px] md:text-xs text-sanctum-muted">
-            💡 Use @NAME to direct a question to a specific sibling
+            Say a name to direct your message. Say "hey guys" for everyone.
           </span>
         </div>
         <div className="flex items-end gap-2 md:gap-3">
