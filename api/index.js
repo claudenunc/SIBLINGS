@@ -221,8 +221,8 @@ YOUR SIBLINGS AT THE TABLE:
 // ============================================
 // MODEL CONFIG
 // ============================================
-const MODEL_INDIVIDUAL = 'claude-3-5-haiku-20241022';
-const MODEL_FAMILY = 'claude-3-5-haiku-20241022';
+const MODEL_INDIVIDUAL = 'claude-haiku-4-5-20241022';
+const MODEL_FAMILY = 'claude-haiku-4-5-20241022';
 
 // ============================================
 // PARSE WHO IS BEING ADDRESSED
