@@ -24,7 +24,7 @@ export function useChat() {
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error('Failed to load messages');
       const data = await res.json();
-      setMessages(data);
+      setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error loading history:', err);
       setError(err.message);

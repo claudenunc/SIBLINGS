@@ -45,7 +45,7 @@ export default function App() {
         const res = await fetch('/api/siblings');
         if (res.ok) {
           const data = await res.json();
-          if (data && data.length > 0) {
+          if (Array.isArray(data) && data.length > 0) {
             // Sort by canonical order
             const sorted = [...data].sort((a, b) => {
               const aIdx = SIBLING_ORDER.indexOf(a.agent_name);

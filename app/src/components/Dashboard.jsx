@@ -31,10 +31,15 @@ export default function Dashboard({ isOpen, onToggle }) {
 
   async function loadDashboardData() {
     try {
+      const safeFetch = (url) =>
+        fetch(url)
+          .then((r) => r.json())
+          .then((d) => (Array.isArray(d) ? d : []))
+          .catch(() => []);
       const [tasksRes, alertsRes, learningsRes] = await Promise.all([
-        fetch('/api/tasks').then((r) => r.json()).catch(() => []),
-        fetch('/api/alerts').then((r) => r.json()).catch(() => []),
-        fetch('/api/learnings').then((r) => r.json()).catch(() => []),
+        safeFetch('/api/tasks'),
+        safeFetch('/api/alerts'),
+        safeFetch('/api/learnings'),
       ]);
       setTasks(tasksRes);
       setAlerts(alertsRes);

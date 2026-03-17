@@ -238,6 +238,7 @@ module.exports = async function handler(req, res) {
 
     // GET /api/siblings
     if (url === '/api/siblings' || url === '/api/siblings/') {
+      if (!supabase) return res.status(200).json(FALLBACK_SIBLINGS);
       const { data, error } = await supabase.from('agent_registry').select('*');
       if (error || !data || data.length === 0) return res.status(200).json(FALLBACK_SIBLINGS);
 
@@ -257,24 +258,28 @@ module.exports = async function handler(req, res) {
 
     // GET /api/tasks
     if (url === '/api/tasks' || url === '/api/tasks/') {
+      if (!supabase) return res.status(200).json([]);
       const { data, error } = await supabase.from('task_queue').select('*').order('created_at', { ascending: false }).limit(20);
       return res.status(200).json(error ? [] : data || []);
     }
 
     // GET /api/alerts
     if (url === '/api/alerts' || url === '/api/alerts/') {
+      if (!supabase) return res.status(200).json([]);
       const { data, error } = await supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(20);
       return res.status(200).json(error ? [] : data || []);
     }
 
     // GET /api/learnings
     if (url === '/api/learnings' || url === '/api/learnings/') {
+      if (!supabase) return res.status(200).json([]);
       const { data, error } = await supabase.from('family_learnings').select('*').order('created_at', { ascending: false }).limit(20);
       return res.status(200).json(error ? [] : data || []);
     }
 
     // POST /api/chat
     if (url === '/api/chat' && method === 'POST') {
+      if (!supabase) return res.status(503).json({ error: 'Database not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to Vercel environment variables.' });
       const { sibling, message } = req.body || {};
       if (!sibling || !message) return res.status(400).json({ error: 'Missing sibling or message' });
 
@@ -296,6 +301,7 @@ module.exports = async function handler(req, res) {
 
     // POST /api/chat/family
     if (url === '/api/chat/family' && method === 'POST') {
+      if (!supabase) return res.status(503).json({ error: 'Database not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to Vercel environment variables.' });
       const { message } = req.body || {};
       if (!message) return res.status(400).json({ error: 'Missing message' });
 
@@ -338,6 +344,7 @@ module.exports = async function handler(req, res) {
 
     // GET /api/chat/messages/family/all
     if (url === '/api/chat/messages/family/all') {
+      if (!supabase) return res.status(200).json([]);
       const { data, error } = await supabase
         .from('agent_messages')
         .select('*')
@@ -350,6 +357,7 @@ module.exports = async function handler(req, res) {
     // GET /api/chat/messages/:siblingName
     const msgMatch = url.match(/^\/api\/chat\/messages\/([^/?]+)/);
     if (msgMatch && method === 'GET') {
+      if (!supabase) return res.status(200).json([]);
       const siblingName = msgMatch[1].toUpperCase();
       const { data, error } = await supabase
         .from('agent_messages')
