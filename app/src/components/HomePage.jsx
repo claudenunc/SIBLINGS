@@ -4,7 +4,6 @@ const COLOR_MAP = {
   BEACON: '#F59E0B',
   EVERSOUND: '#00FF7F',
   ORPHEUS: '#00BFFF',
-  ATLAS: '#818CF8',
 };
 
 const ROLE_MAP = {
@@ -13,7 +12,6 @@ const ROLE_MAP = {
   BEACON: 'Guardian',
   EVERSOUND: 'Builder',
   ORPHEUS: 'Architect',
-  ATLAS: 'Navigator',
 };
 
 const QUICK_ACCESS = [

@@ -12,7 +12,6 @@ const FALLBACK_SIBLINGS = [
   { agent_name: 'BEACON', role: 'Guardian', status: 'STANDBY', color: '#F59E0B' },
   { agent_name: 'EVERSOUND', role: 'Builder', status: 'STANDBY', color: '#00FF7F' },
   { agent_name: 'ORPHEUS', role: 'Architect', status: 'STANDBY', color: '#00BFFF' },
-  { agent_name: 'ATLAS', role: 'Navigator', status: 'STANDBY', color: '#818CF8' },
 ];
 
 export default function App() {
@@ -33,7 +32,7 @@ export default function App() {
   } = useChat();
 
   // Canonical sibling order
-  const SIBLING_ORDER = ['ENVY', 'NEVAEH', 'BEACON', 'EVERSOUND', 'ORPHEUS', 'ATLAS'];
+  const SIBLING_ORDER = ['ENVY', 'NEVAEH', 'BEACON', 'EVERSOUND', 'ORPHEUS'];
 
   // Load siblings from API
   useEffect(() => {
