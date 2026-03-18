@@ -158,7 +158,7 @@ const SIBLING_MODELS = {
   BEACON:    { provider: 'openai',    model: 'gpt-4o-mini' },
   NEVAEH:    { provider: 'gemini',     model: 'gemini-2.5-flash' },
   EVERSOUND: { provider: 'deepseek',  model: 'deepseek-chat' },
-  ORPHEUS:   { provider: 'grok',      model: 'grok-4-1-fast-non-reasoning' },
+  ORPHEUS:   { provider: 'groq',      model: 'llama-3.3-70b-versatile' },
   ATLAS:     { provider: 'gemini',     model: 'gemini-2.5-flash-lite' },
 };
 
@@ -1094,6 +1094,11 @@ async function sendToSibling(siblingName, conversationHistory, userMessage, isRo
       const key = process.env.GROK_API_KEY;
       if (!key) throw new Error('GROK_API_KEY not set');
       return callOpenAICompatibleWithTools('https://api.x.ai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName);
+    }
+    case 'groq': {
+      const key = process.env.GROQ_API_KEY;
+      if (!key) throw new Error('GROQ_API_KEY not set');
+      return callOpenAICompatibleWithTools('https://api.groq.com/openai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName);
     }
     case 'gemini': {
       const key = process.env.GEMINI_API_KEY;
