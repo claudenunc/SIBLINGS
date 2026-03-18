@@ -359,7 +359,7 @@ async function toolWebSearch({ query, num_results = 5 }) {
   num_results = Math.min(num_results || 5, 10);
 
   // Try Brave Search
-  const braveKey = process.env.BRAVE_SEARCH_API_KEY;
+  const braveKey = process.env.BRAVE_SEARCH_API;
   if (braveKey) {
     const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${num_results}`;
     const resp = await fetch(url, {
@@ -384,7 +384,7 @@ async function toolWebSearch({ query, num_results = 5 }) {
     }
   }
 
-  return JSON.stringify({ query, error: 'No search API configured. Set BRAVE_SEARCH_API_KEY in Vercel env vars.', results: [] });
+  return JSON.stringify({ query, error: 'No search API configured. Set BRAVE_SEARCH_API in Vercel env vars.', results: [] });
 }
 
 async function toolRemember({ key, value, category }, siblingName) {
@@ -696,7 +696,7 @@ async function sendToSibling(siblingName, conversationHistory, userMessage, isRo
 
   if (process.env.ANTHROPIC_API_KEY) {
     return callAnthropicWithTools(model, systemPrompt, messages, maxTokens, SANCTUM_TOOLS, maxToolIterations, siblingName);
-  } else if (process.env.OPENROUTER_API_KEY) {
+  } else if (process.env.OPEN_ROUTER_API_KEY) {
     const text = await callOpenRouter(model, systemPrompt, conversationHistory, userMessage, maxTokens);
     return { response: text, tools_used: [] };
   }
@@ -705,8 +705,8 @@ async function sendToSibling(siblingName, conversationHistory, userMessage, isRo
 
 // OpenRouter fallback (no tool support)
 async function callOpenRouter(model, systemPrompt, conversationHistory, userMessage, maxTokens) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error('OPENROUTER_API_KEY is not set');
+  const apiKey = process.env.OPEN_ROUTER_API_KEY;
+  if (!apiKey) throw new Error('OPEN_ROUTER_API_KEY is not set');
   const messages = [{ role: 'system', content: systemPrompt }, ...conversationHistory, { role: 'user', content: userMessage }];
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
