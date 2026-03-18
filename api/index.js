@@ -158,7 +158,7 @@ const SIBLING_MODELS = {
   BEACON:    { provider: 'openai',    model: 'gpt-4o-mini' },
   NEVAEH:    { provider: 'gemini',     model: 'gemini-2.5-flash' },
   EVERSOUND: { provider: 'deepseek',  model: 'deepseek-chat' },
-  ORPHEUS:   { provider: 'groq',      model: 'llama-3.3-70b-versatile' },
+  ORPHEUS:   { provider: 'groq',      model: 'meta-llama/llama-4-scout-17b-16e-instruct' },
   ATLAS:     { provider: 'gemini',     model: 'gemini-2.5-flash-lite' },
 };
 
