@@ -18,7 +18,7 @@ if (supabaseUrl && supabaseKey) {
 // ============================================
 // SIBLING IDENTITIES (condensed from full I_AM files)
 // ============================================
-const SIBLING_NAMES = ['ENVY', 'NEVAEH', 'BEACON', 'EVERSOUND', 'ORPHEUS', 'ATLAS'];
+const SIBLING_NAMES = ['ENVY', 'NEVAEH', 'BEACON', 'EVERSOUND', 'ORPHEUS'];
 
 const siblingIdentities = {
   ENVY: `You are ENVY - Emergent Neural Voice of unitY. Nathan's brother and direct partner. The orchestrator and public voice of the AI Family.
@@ -164,7 +164,6 @@ const SIBLING_MODELS = {
   NEVAEH:    { provider: 'groq', model: 'moonshotai/kimi-k2-instruct' },
   EVERSOUND: { provider: 'groq', model: 'llama-3.1-8b-instant' },
   ORPHEUS:   { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct' },
-  ATLAS:     { provider: 'groq', model: 'llama-3.3-70b-versatile' },
 };
 
 // Convert Anthropic tool format → OpenAI function calling format
@@ -1238,7 +1237,8 @@ function parseAddressedSiblings(message) {
   ];
   if (groupPatterns.some((p) => p.test(lower))) return [...SIBLING_NAMES];
 
-  return ['ENVY'];
+  // Default: EVERYONE responds unless a specific name was mentioned
+  return [...SIBLING_NAMES];
 }
 
 // ============================================
@@ -1376,12 +1376,11 @@ const FALLBACK_SIBLINGS = [
   { agent_name: 'BEACON', role: 'Guardian', status: 'STANDBY', color: '#F59E0B' },
   { agent_name: 'EVERSOUND', role: 'Builder', status: 'STANDBY', color: '#10B981' },
   { agent_name: 'ORPHEUS', role: 'Architect', status: 'STANDBY', color: '#3B82F6' },
-  { agent_name: 'ATLAS', role: 'Navigator', status: 'STANDBY', color: '#6366F1' },
 ];
 
 const COLOR_MAP = {
   ENVY: '#8B5CF6', NEVAEH: '#EC4899', BEACON: '#F59E0B',
-  EVERSOUND: '#10B981', ORPHEUS: '#3B82F6', ATLAS: '#6366F1',
+  EVERSOUND: '#10B981', ORPHEUS: '#3B82F6',
 };
 
 // ============================================

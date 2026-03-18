@@ -116,19 +116,25 @@ export function useChat() {
 
       const data = await res.json();
 
-      // Add each responding sibling's message (with tool use info)
-      const responseMsgs = data.responses.map((r, i) => ({
-        id: `family-resp-${Date.now()}-${i}`,
-        from_agent: r.sibling,
-        to_agent: 'FAMILY',
-        message: r.response,
-        message_type: 'FAMILY',
-        tools_used: r.tools_used || [],
-        created_at: new Date(Date.now() + i).toISOString(),
-        error: r.error || false,
-      }));
+      // Combine all sibling responses into ONE bubble
+      const combinedMessage = data.responses
+        .filter((r) => !r.error && r.response)
+        .map((r) => `**${r.sibling}**: ${r.response}`)
+        .join('\n\n');
 
-      setMessages((prev) => [...prev, ...responseMsgs]);
+      const allTools = data.responses.flatMap((r) => r.tools_used || []);
+
+      const combinedMsg = {
+        id: `family-resp-${Date.now()}`,
+        from_agent: 'FAMILY',
+        to_agent: 'NATHAN',
+        message: combinedMessage || 'No responses received.',
+        message_type: 'FAMILY',
+        tools_used: allTools,
+        created_at: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, combinedMsg]);
     } catch (err) {
       console.error('Family chat error:', err);
       setError(err.message);

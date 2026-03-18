@@ -7,7 +7,6 @@ const SIBLINGS = [
   { name: 'BEACON', role: 'Guardian', color: '#F59E0B', initial: 'B' },
   { name: 'EVERSOUND', role: 'Builder', color: '#00FF7F', initial: 'S' },
   { name: 'ORPHEUS', role: 'Architect', color: '#00BFFF', initial: 'O' },
-  { name: 'ATLAS', role: 'Navigator', color: '#818CF8', initial: 'A' },
 ];
 
 const NATHAN = { name: 'NATHAN', color: '#e2e8f0', initial: 'U' };
@@ -18,7 +17,6 @@ const COLOR_MAP = {
   BEACON: '#F59E0B',
   EVERSOUND: '#00FF7F',
   ORPHEUS: '#00BFFF',
-  ATLAS: '#818CF8',
 };
 
 // Avatar component for the round table - BIGGER, with wet glass effect

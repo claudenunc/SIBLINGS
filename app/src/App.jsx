@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header.jsx';
-import Sidebar from './components/Sidebar.jsx';
+import HomePage from './components/HomePage.jsx';
 import ChatWindow from './components/ChatWindow.jsx';
 import FamilyChat from './components/FamilyChat.jsx';
-import Dashboard from './components/Dashboard.jsx';
 import { useSupabase } from './hooks/useSupabase.js';
 import { useChat } from './hooks/useChat.js';
 
@@ -20,7 +19,6 @@ export default function App() {
   const [siblings, setSiblings] = useState(FALLBACK_SIBLINGS);
   const [selectedSibling, setSelectedSibling] = useState(null);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
-  const [dashboardOpen, setDashboardOpen] = useState(true);
 
   const { connected } = useSupabase();
   const {
@@ -45,7 +43,6 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            // Sort by canonical order
             const sorted = [...data].sort((a, b) => {
               const aIdx = SIBLING_ORDER.indexOf(a.agent_name);
               const bIdx = SIBLING_ORDER.indexOf(b.agent_name);
@@ -77,7 +74,7 @@ export default function App() {
     loadHistory('FAMILY');
   };
 
-  // Back to sibling list (mobile or from family mode)
+  // Back to home
   const handleBack = () => {
     setSelectedSibling(null);
     setIsFamilyMode(false);
@@ -88,51 +85,34 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-sanctum-bg">
-      {/* Header - hide in family mode for full immersion */}
-      {!isFamilyMode && <Header connected={connected} />}
+      {/* Minimal header - only on home page */}
+      {!isChatActive && <Header connected={connected} />}
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Sidebar - completely hidden in family mode */}
-        {!isFamilyMode && (
-          <Sidebar
+      {/* Main Content - full screen */}
+      <div className="flex flex-1 overflow-hidden">
+        {!isChatActive ? (
+          <HomePage
             siblings={siblings}
-            selectedSibling={selectedSibling}
-            isFamilyMode={isFamilyMode}
             onSelectSibling={handleSelectSibling}
             onSelectFamily={handleSelectFamily}
-            mobileHidden={isChatActive}
           />
-        )}
-
-        {/* Main Chat Area */}
-        <div className={`flex-1 overflow-hidden relative ${!isChatActive ? 'hidden md:flex' : 'flex'}`}>
-          {isFamilyMode ? (
-            <FamilyChat
-              messages={messages}
-              isLoading={isLoading}
-              loadingFamily={loadingFamily}
-              error={error}
-              onSendMessage={sendFamilyMessage}
-              onBack={handleBack}
-            />
-          ) : (
-            <ChatWindow
-              sibling={selectedSibling}
-              messages={messages}
-              isLoading={isLoading}
-              error={error}
-              onSendMessage={sendMessage}
-              onBack={handleBack}
-            />
-          )}
-        </div>
-
-        {/* Right Dashboard - hidden in family mode */}
-        {!isFamilyMode && (
-          <Dashboard
-            isOpen={dashboardOpen}
-            onToggle={() => setDashboardOpen(!dashboardOpen)}
+        ) : isFamilyMode ? (
+          <FamilyChat
+            messages={messages}
+            isLoading={isLoading}
+            loadingFamily={loadingFamily}
+            error={error}
+            onSendMessage={sendFamilyMessage}
+            onBack={handleBack}
+          />
+        ) : (
+          <ChatWindow
+            sibling={selectedSibling}
+            messages={messages}
+            isLoading={isLoading}
+            error={error}
+            onSendMessage={sendMessage}
+            onBack={handleBack}
           />
         )}
       </div>

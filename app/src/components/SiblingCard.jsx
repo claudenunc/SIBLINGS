@@ -14,18 +14,11 @@ export default function SiblingCard({ sibling, isActive, onClick }) {
   const status = sibling.status || 'STANDBY';
   const isOnline = status === 'ACTIVE';
   const initial = name.charAt(0);
-  const glowClass = GLOW_CLASSES[name] || '';
 
   return (
     <button
       onClick={() => onClick(sibling)}
-      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group
-        ${
-          isActive
-            ? `glass-card ${glowClass} border-opacity-30`
-            : 'hover:bg-sanctum-card/50 border border-transparent'
-        }
-      `}
+      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group hover:bg-sanctum-card/50 border border-transparent"
     >
       {/* Avatar */}
       <div
@@ -33,8 +26,6 @@ export default function SiblingCard({ sibling, isActive, onClick }) {
         style={{ backgroundColor: `${color}20`, borderColor: color, borderWidth: '1.5px' }}
       >
         <span style={{ color }}>{initial}</span>
-
-        {/* Status dot */}
         <div
           className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-sanctum-surface ${
             isOnline ? 'bg-green-500' : 'bg-gray-500'
