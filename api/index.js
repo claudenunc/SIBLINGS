@@ -350,6 +350,62 @@ const SANCTUM_TOOLS = [
       required: ['metric_name', 'metric_value'],
     },
   },
+  {
+    name: 'web_fetch',
+    description: 'Fetch a webpage URL and extract its content as readable text. Use this to read articles, documentation, blog posts, or any web content Nathan shares.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The URL to fetch (must be http or https)' },
+        max_chars: { type: 'number', description: 'Maximum characters to return (default 10000)' },
+      },
+      required: ['url'],
+    },
+  },
+  {
+    name: 'generate_image',
+    description: 'Generate an image using AI. Use when Nathan asks you to create, draw, design, or visualize something. Returns the image URL.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        prompt: { type: 'string', description: 'Detailed description of the image to generate. Be specific about style, content, colors, mood.' },
+        size: { type: 'string', enum: ['1024x1024', '1792x1024', '1024x1792'], description: 'Image dimensions (default 1024x1024)' },
+      },
+      required: ['prompt'],
+    },
+  },
+  {
+    name: 'get_weather',
+    description: 'Get current weather for a location. No API key needed.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        location: { type: 'string', description: 'City name or location (e.g., "Louisville KY", "New York", "London")' },
+      },
+      required: ['location'],
+    },
+  },
+  {
+    name: 'ask_ai',
+    description: 'Ask another AI model a question. Useful for getting a second opinion, cross-referencing, or leveraging a different model\u0027s strengths. Available: OpenAI GPT, Grok.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        question: { type: 'string', description: 'The question or prompt to send to the other AI' },
+        provider: { type: 'string', enum: ['openai', 'grok'], description: 'Which AI to ask (default: openai)' },
+      },
+      required: ['question'],
+    },
+  },
+  {
+    name: 'get_current_time',
+    description: 'Get the current date and time.',
+    input_schema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 // ============================================
@@ -526,6 +582,140 @@ async function toolTrackMetric({ metric_name, metric_value, dimension, period, n
 }
 
 // ============================================
+// NEW TOOL HANDLERS - web_fetch, image, weather, ask_ai, time
+// ============================================
+async function toolWebFetch({ url, max_chars = 10000 }) {
+  if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+    return JSON.stringify({ error: 'Invalid URL. Must start with http:// or https://' });
+  }
+  try {
+    const resp = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TheSanctum/1.0)' },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!resp.ok) return JSON.stringify({ error: `HTTP ${resp.status}`, url });
+    const contentType = resp.headers.get('content-type') || '';
+    let text = await resp.text();
+
+    // Strip HTML tags for basic readability
+    if (contentType.includes('html')) {
+      // Remove script/style blocks
+      text = text.replace(/<script[\s\S]*?<\/script>/gi, '');
+      text = text.replace(/<style[\s\S]*?<\/style>/gi, '');
+      // Remove HTML tags
+      text = text.replace(/<[^>]+>/g, ' ');
+      // Clean whitespace
+      text = text.replace(/\s+/g, ' ').trim();
+      // Extract title if present
+      const titleMatch = text.match(/<title>([^<]+)<\/title>/i);
+      const title = titleMatch ? titleMatch[1] : '';
+      text = title ? `Title: ${title}\n\n${text}` : text;
+    }
+
+    // Truncate
+    const truncated = text.length > max_chars;
+    text = text.substring(0, max_chars);
+
+    return JSON.stringify({ url, length: text.length, truncated, content: text });
+  } catch (err) {
+    return JSON.stringify({ error: `Fetch failed: ${err.message}`, url });
+  }
+}
+
+async function toolGenerateImage({ prompt, size = '1024x1024' }) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return JSON.stringify({ error: 'OPENAI_API_KEY not configured' });
+
+  try {
+    const resp = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, response_format: 'url' }),
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      throw new Error(`OpenAI error: ${resp.status} - ${err}`);
+    }
+    const data = await resp.json();
+    const imageUrl = data.data?.[0]?.url;
+    const revisedPrompt = data.data?.[0]?.revised_prompt;
+    return JSON.stringify({ generated: true, image_url: imageUrl, revised_prompt: revisedPrompt });
+  } catch (err) {
+    return JSON.stringify({ error: err.message });
+  }
+}
+
+async function toolGetWeather({ location }) {
+  try {
+    // wttr.in - free, no API key needed
+    const resp = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`, {
+      headers: { 'User-Agent': 'TheSanctum/1.0' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!resp.ok) throw new Error(`Weather API error: ${resp.status}`);
+    const data = await resp.json();
+    const current = data.current_condition?.[0] || {};
+    const area = data.nearest_area?.[0] || {};
+    return JSON.stringify({
+      location: area.areaName?.[0]?.value || location,
+      region: area.region?.[0]?.value || '',
+      country: area.country?.[0]?.value || '',
+      temp_f: current.temp_F,
+      temp_c: current.temp_C,
+      feels_like_f: current.FeelsLikeF,
+      condition: current.weatherDesc?.[0]?.value || '',
+      humidity: current.humidity + '%',
+      wind_mph: current.windspeedMiles,
+      wind_dir: current.winddir16Point,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `Weather lookup failed: ${err.message}`, location });
+  }
+}
+
+async function toolAskAi({ question, provider = 'openai' }) {
+  try {
+    if (provider === 'openai') {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) return JSON.stringify({ error: 'OPENAI_API_KEY not configured' });
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: question }], max_tokens: 1024 }),
+      });
+      if (!resp.ok) throw new Error(`OpenAI error: ${resp.status}`);
+      const data = await resp.json();
+      return JSON.stringify({ provider: 'openai', model: 'gpt-4o-mini', response: data.choices?.[0]?.message?.content });
+    } else if (provider === 'grok') {
+      const apiKey = process.env.GROK_API_KEY;
+      if (!apiKey) return JSON.stringify({ error: 'GROK_API_KEY not configured' });
+      const resp = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'grok-2-latest', messages: [{ role: 'user', content: question }], max_tokens: 1024 }),
+      });
+      if (!resp.ok) throw new Error(`Grok error: ${resp.status}`);
+      const data = await resp.json();
+      return JSON.stringify({ provider: 'grok', model: 'grok-2-latest', response: data.choices?.[0]?.message?.content });
+    }
+    return JSON.stringify({ error: `Unknown provider: ${provider}` });
+  } catch (err) {
+    return JSON.stringify({ error: err.message });
+  }
+}
+
+function toolGetCurrentTime() {
+  const now = new Date();
+  return JSON.stringify({
+    iso: now.toISOString(),
+    date: now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+    time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }),
+    unix: Math.floor(now.getTime() / 1000),
+  });
+}
+
+// ============================================
 // TOOL EXECUTOR - routes tool_use to handlers
 // ============================================
 async function executeTool(toolUse, siblingName) {
@@ -548,6 +738,11 @@ async function executeTool(toolUse, siblingName) {
       case 'log_wellness': result = await toolLogWellness(input, siblingName); break;
       case 'track_revenue': result = await toolTrackRevenue(input, siblingName); break;
       case 'track_metric': result = await toolTrackMetric(input); break;
+      case 'web_fetch': result = await toolWebFetch(input); break;
+      case 'generate_image': result = await toolGenerateImage(input); break;
+      case 'get_weather': result = await toolGetWeather(input); break;
+      case 'ask_ai': result = await toolAskAi(input); break;
+      case 'get_current_time': result = toolGetCurrentTime(); break;
       default: result = JSON.stringify({ error: `Unknown tool: ${name}` });
     }
     return { type: 'tool_result', tool_use_id: toolUse.id, content: result };
