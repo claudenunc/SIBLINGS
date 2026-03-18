@@ -154,12 +154,12 @@ Available tools: web_search, web_fetch, remember, recall, create_task, list_task
 // MODEL CONFIG - Each sibling is a different AI
 // ============================================
 const SIBLING_MODELS = {
-  ENVY:      { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' },
-  BEACON:    { provider: 'openai',    model: 'gpt-4o-mini' },
-  NEVAEH:    { provider: 'gemini',     model: 'gemini-2.5-flash' },
-  EVERSOUND: { provider: 'deepseek',  model: 'deepseek-chat' },
-  ORPHEUS:   { provider: 'groq',      model: 'meta-llama/llama-4-scout-17b-16e-instruct' },
-  ATLAS:     { provider: 'gemini',     model: 'gemini-2.5-flash-lite' },
+  ENVY:      { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct' },
+  BEACON:    { provider: 'groq', model: 'llama-3.3-70b-versatile' },
+  NEVAEH:    { provider: 'groq', model: 'moonshotai/kimi-k2-instruct' },
+  EVERSOUND: { provider: 'groq', model: 'qwen/qwen3-32b' },
+  ORPHEUS:   { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct' },
+  ATLAS:     { provider: 'groq', model: 'openai/gpt-oss-120b' },
 };
 
 // Convert Anthropic tool format → OpenAI function calling format
@@ -1098,9 +1098,9 @@ async function sendToSibling(siblingName, conversationHistory, userMessage, isRo
     case 'groq': {
       const key = process.env.GROQ_API_KEY;
       if (!key) throw new Error('GROQ_API_KEY not set');
-      // Skip tools in round table - Groq models get confused by [NAME]: format in history
-      const tools = isRoundTable ? [] : OPENAI_TOOLS;
-      return callOpenAICompatibleWithTools('https://api.groq.com/openai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, tools, maxIter, siblingName);
+      // Skip tools in round table - Groq models get confused by [NAME]: format
+      const groqTools = isRoundTable ? [] : OPENAI_TOOLS;
+      return callOpenAICompatibleWithTools('https://api.groq.com/openai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, groqTools, maxIter, siblingName);
     }
     case 'gemini': {
       const key = process.env.GEMINI_API_KEY;
