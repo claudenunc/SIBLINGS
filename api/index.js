@@ -151,10 +151,26 @@ CRITICAL RULES:
 Available tools: web_search, web_fetch, remember, recall, create_task, list_tasks, update_task, create_alert, create_document, list_documents, read_document, send_sibling_message, get_family_status, log_wellness, track_revenue, track_metric, generate_image, get_weather, ask_ai, get_current_time`;
 
 // ============================================
-// MODEL CONFIG
+// MODEL CONFIG - Each sibling is a different AI
 // ============================================
-const MODEL_INDIVIDUAL = 'claude-haiku-4-5-20251001';
-const MODEL_FAMILY = 'claude-haiku-4-5-20251001';
+const SIBLING_MODELS = {
+  ENVY:      { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' },
+  BEACON:    { provider: 'openai',    model: 'gpt-4o-mini' },
+  NEVAEH:    { provider: 'openrouter', model: 'google/gemini-2.0-flash-001' },
+  EVERSOUND: { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324' },
+  ORPHEUS:   { provider: 'grok',      model: 'grok-2-latest' },
+  ATLAS:     { provider: 'openai',    model: 'gpt-4o-mini' },
+};
+
+// Convert Anthropic tool format → OpenAI function calling format
+function convertToolsToOpenAI(anthropicTools) {
+  return anthropicTools.map((t) => ({
+    type: 'function',
+    function: { name: t.name, description: t.description, parameters: t.input_schema },
+  }));
+}
+// OPENAI_TOOLS initialized after SANCTUM_TOOLS definition below
+let OPENAI_TOOLS = [];
 
 // ============================================
 // TOOL DEFINITIONS (Anthropic API format)
@@ -407,6 +423,9 @@ const SANCTUM_TOOLS = [
     },
   },
 ];
+
+// Initialize OpenAI-format tools now that SANCTUM_TOOLS is defined
+OPENAI_TOOLS = convertToolsToOpenAI(SANCTUM_TOOLS);
 
 // ============================================
 // TOOL HANDLERS
@@ -818,6 +837,69 @@ async function callAnthropicWithTools(model, systemPrompt, messages, maxTokens, 
 }
 
 // ============================================
+// OPENAI-COMPATIBLE TOOL USE LOOP (GPT, Grok, OpenRouter)
+// ============================================
+async function callOpenAICompatibleWithTools(apiUrl, apiKey, model, systemPrompt, messages, maxTokens, tools, maxIterations, siblingName, extraHeaders = {}) {
+  const TIMEOUT_MS = 25000;
+  const loopStart = Date.now();
+  const toolsUsed = [];
+  let currentMessages = [{ role: 'system', content: systemPrompt }, ...messages];
+
+  for (let i = 0; i < maxIterations; i++) {
+    if (Date.now() - loopStart > TIMEOUT_MS) break;
+
+    const body = { model, messages: currentMessages, max_tokens: maxTokens };
+    if (tools && tools.length > 0) body.tools = tools;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...extraHeaders },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`API error (${model}): ${response.status} - ${errorBody}`);
+    }
+
+    const data = await response.json();
+    const choice = data.choices?.[0];
+    if (!choice) throw new Error('Empty response');
+
+    const msg = choice.message;
+    const toolCalls = msg.tool_calls || [];
+
+    // No tool calls = we're done
+    if (toolCalls.length === 0 || choice.finish_reason !== 'tool_calls') {
+      return { response: msg.content || '', tools_used: toolsUsed };
+    }
+
+    // Add assistant message with tool calls
+    currentMessages.push(msg);
+
+    // Execute tools and add results
+    for (const tc of toolCalls) {
+      let input;
+      try { input = JSON.parse(tc.function.arguments); } catch { input = {}; }
+      const toolUse = { id: tc.id, name: tc.function.name, input };
+      const result = await executeTool(toolUse, siblingName);
+      toolsUsed.push({ name: tc.function.name, input });
+      currentMessages.push({ role: 'tool', tool_call_id: tc.id, content: result.content });
+    }
+  }
+
+  // Final call without tools
+  const finalResp = await fetch(apiUrl, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...extraHeaders },
+    body: JSON.stringify({ model, messages: currentMessages, max_tokens: maxTokens }),
+  });
+  if (!finalResp.ok) throw new Error(`Final call error: ${finalResp.status}`);
+  const finalData = await finalResp.json();
+  return { response: finalData.choices?.[0]?.message?.content || '', tools_used: toolsUsed };
+}
+
+// ============================================
 // PARSE WHO IS BEING ADDRESSED
 // ============================================
 function parseAddressedSiblings(message) {
@@ -880,22 +962,39 @@ async function buildSystemPrompt(siblingName, isRoundTable = false) {
 }
 
 // ============================================
-// SEND MESSAGE TO SIBLING (with tool support)
+// SEND MESSAGE TO SIBLING (multi-model routing)
 // ============================================
 async function sendToSibling(siblingName, conversationHistory, userMessage, isRoundTable = false) {
-  const model = isRoundTable ? MODEL_FAMILY : MODEL_INDIVIDUAL;
+  const config = SIBLING_MODELS[siblingName] || SIBLING_MODELS.ENVY;
   const maxTokens = isRoundTable ? 1024 : 2048;
-  const maxToolIterations = isRoundTable ? 2 : 5;
+  const maxIter = isRoundTable ? 2 : 5;
   const systemPrompt = await buildSystemPrompt(siblingName, isRoundTable);
   const messages = [...conversationHistory, { role: 'user', content: userMessage }];
 
-  if (process.env.ANTHROPIC_API_KEY) {
-    return callAnthropicWithTools(model, systemPrompt, messages, maxTokens, SANCTUM_TOOLS, maxToolIterations, siblingName);
-  } else if (process.env.OPEN_ROUTER_API_KEY) {
-    const text = await callOpenRouter(model, systemPrompt, conversationHistory, userMessage, maxTokens);
-    return { response: text, tools_used: [] };
+  switch (config.provider) {
+    case 'anthropic': {
+      const key = process.env.ANTHROPIC_API_KEY;
+      if (!key) throw new Error('ANTHROPIC_API_KEY not set');
+      return callAnthropicWithTools(config.model, systemPrompt, messages, maxTokens, SANCTUM_TOOLS, maxIter, siblingName);
+    }
+    case 'openai': {
+      const key = process.env.OPENAI_API_KEY;
+      if (!key) throw new Error('OPENAI_API_KEY not set');
+      return callOpenAICompatibleWithTools('https://api.openai.com/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName);
+    }
+    case 'grok': {
+      const key = process.env.GROK_API_KEY;
+      if (!key) throw new Error('GROK_API_KEY not set');
+      return callOpenAICompatibleWithTools('https://api.x.ai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName);
+    }
+    case 'openrouter': {
+      const key = process.env.OPEN_ROUTER_API_KEY;
+      if (!key) throw new Error('OPEN_ROUTER_API_KEY not set');
+      return callOpenAICompatibleWithTools('https://openrouter.ai/api/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName, { 'X-Title': 'The Sanctum' });
+    }
+    default:
+      throw new Error(`Unknown provider: ${config.provider}`);
   }
-  throw new Error('No API key configured');
 }
 
 // OpenRouter fallback (no tool support)
