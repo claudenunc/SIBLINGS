@@ -8,49 +8,76 @@ const COLOR_MAP = {
   NATHAN: '#e2e8f0',
 };
 
-// Render message text with inline images and clickable links
+// Render message text with inline images, markdown images, and clickable links
 function MessageContent({ text, color }) {
   if (!text) return null;
 
-  // Split text by URLs that look like images (from DALL-E or similar)
-  const urlRegex = /(https?:\/\/[^\s"<>]+\.(?:png|jpg|jpeg|gif|webp)[^\s"<>]*|https?:\/\/oaidalleapiprodscus\.blob\.core\.windows\.net[^\s"<>]*)/gi;
-  const linkRegex = /(https?:\/\/[^\s"<>]+)/g;
+  // First: handle markdown images ![alt](url) and replace with actual images
+  // Then: handle raw image URLs
+  // Then: handle regular URLs as links
 
-  // Check if there are image URLs
-  const imageUrls = text.match(urlRegex) || [];
+  const elements = [];
+  // Split by markdown image pattern AND raw URLs
+  const mdImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  const urlRegex = /(https?:\/\/[^\s"<>)\]]+)/g;
 
-  // Replace URLs with clickable links
-  const parts = text.split(linkRegex);
-  const rendered = parts.map((part, i) => {
-    if (part.match(linkRegex)) {
-      // Check if it's an image URL
-      if (imageUrls.some((img) => part.startsWith(img.substring(0, 50)))) {
-        return (
-          <span key={i}>
-            <a href={part} target="_blank" rel="noopener noreferrer" className="text-xs underline" style={{ color }}>
-              View full image
-            </a>
-            <img
-              src={part}
-              alt="Generated image"
-              className="mt-2 rounded-lg max-w-full max-h-80 object-contain"
-              loading="lazy"
-            />
-          </span>
-        );
-      }
-      return (
-        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color }}>
-          {part.length > 60 ? part.substring(0, 57) + '...' : part}
-        </a>
+  // Check if URL is an image
+  const isImageUrl = (url) =>
+    /\.(png|jpg|jpeg|gif|webp)/i.test(url) ||
+    url.includes('supabase.co/storage') ||
+    url.includes('oaidalleapiprodscus.blob.core.windows.net');
+
+  // Replace markdown images first
+  let processed = text.replace(mdImageRegex, (match, alt, url) => `\n__IMG__${url}__IMG__\n`);
+
+  // Split by our image markers and URLs
+  const chunks = processed.split(/(__IMG__[^_]+__IMG__)/g);
+
+  chunks.forEach((chunk, i) => {
+    // Handle our image markers
+    const imgMatch = chunk.match(/^__IMG__(.+)__IMG__$/);
+    if (imgMatch) {
+      const url = imgMatch[1];
+      elements.push(
+        <span key={`img-${i}`} className="block my-2">
+          <img src={url} alt="Generated" className="rounded-lg max-w-full max-h-96 object-contain" loading="lazy" />
+          <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block underline" style={{ color }}>
+            Open full image
+          </a>
+        </span>
       );
+      return;
     }
-    return <span key={i}>{part}</span>;
+
+    // Handle text chunks - find URLs within them
+    const parts = chunk.split(urlRegex);
+    parts.forEach((part, j) => {
+      if (part.match(urlRegex)) {
+        if (isImageUrl(part)) {
+          elements.push(
+            <span key={`iurl-${i}-${j}`} className="block my-2">
+              <img src={part} alt="Image" className="rounded-lg max-w-full max-h-96 object-contain" loading="lazy" />
+              <a href={part} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block underline" style={{ color }}>
+                Open full image
+              </a>
+            </span>
+          );
+        } else {
+          elements.push(
+            <a key={`link-${i}-${j}`} href={part} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color }}>
+              {part.length > 60 ? part.substring(0, 57) + '...' : part}
+            </a>
+          );
+        }
+      } else if (part) {
+        elements.push(<span key={`txt-${i}-${j}`}>{part}</span>);
+      }
+    });
   });
 
   return (
     <p className="text-sm text-sanctum-text whitespace-pre-wrap break-words leading-relaxed">
-      {rendered}
+      {elements}
     </p>
   );
 }
