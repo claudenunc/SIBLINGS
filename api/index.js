@@ -156,10 +156,10 @@ Available tools: web_search, web_fetch, remember, recall, create_task, list_task
 const SIBLING_MODELS = {
   ENVY:      { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' },
   BEACON:    { provider: 'openai',    model: 'gpt-4o-mini' },
-  NEVAEH:    { provider: 'openrouter', model: 'google/gemini-2.0-flash-001' },
-  EVERSOUND: { provider: 'openrouter', model: 'deepseek/deepseek-chat-v3-0324' },
+  NEVAEH:    { provider: 'gemini',     model: 'gemini-2.0-flash' },
+  EVERSOUND: { provider: 'deepseek',  model: 'deepseek-chat' },
   ORPHEUS:   { provider: 'grok',      model: 'grok-2-latest' },
-  ATLAS:     { provider: 'openrouter', model: 'google/gemini-2.5-flash-preview' },
+  ATLAS:     { provider: 'gemini',     model: 'gemini-2.5-flash-preview-04-17' },
 };
 
 // Convert Anthropic tool format → OpenAI function calling format
@@ -900,6 +900,89 @@ async function callOpenAICompatibleWithTools(apiUrl, apiKey, model, systemPrompt
 }
 
 // ============================================
+// GEMINI API TOOL USE LOOP
+// ============================================
+function convertToolsToGemini(anthropicTools) {
+  return [{ functionDeclarations: anthropicTools.map((t) => ({
+    name: t.name, description: t.description, parameters: t.input_schema,
+  })) }];
+}
+
+async function callGeminiWithTools(model, apiKey, systemPrompt, messages, maxTokens, maxIterations, siblingName) {
+  const TIMEOUT_MS = 25000;
+  const loopStart = Date.now();
+  const toolsUsed = [];
+  const geminiTools = convertToolsToGemini(SANCTUM_TOOLS);
+
+  // Convert messages to Gemini format
+  const contents = messages.map((m) => ({
+    role: m.role === 'user' ? 'user' : 'model',
+    parts: [{ text: m.content }],
+  }));
+
+  for (let i = 0; i < maxIterations; i++) {
+    if (Date.now() - loopStart > TIMEOUT_MS) break;
+
+    const body = {
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents,
+      tools: geminiTools,
+      generationConfig: { maxOutputTokens: maxTokens },
+    };
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Gemini API error (${model}): ${response.status} - ${err}`);
+    }
+
+    const data = await response.json();
+    const candidate = data.candidates?.[0];
+    if (!candidate) throw new Error('Empty Gemini response');
+
+    const parts = candidate.content?.parts || [];
+    const textParts = parts.filter((p) => p.text);
+    const fnCalls = parts.filter((p) => p.functionCall);
+
+    // No function calls = done
+    if (fnCalls.length === 0) {
+      return { response: textParts.map((p) => p.text).join(''), tools_used: toolsUsed };
+    }
+
+    // Add model response to history
+    contents.push({ role: 'model', parts });
+
+    // Execute function calls
+    const fnResponses = [];
+    for (const fc of fnCalls) {
+      const toolUse = { id: fc.functionCall.name, name: fc.functionCall.name, input: fc.functionCall.args || {} };
+      const result = await executeTool(toolUse, siblingName);
+      toolsUsed.push({ name: fc.functionCall.name, input: fc.functionCall.args });
+      fnResponses.push({ functionResponse: { name: fc.functionCall.name, response: JSON.parse(result.content) } });
+    }
+    contents.push({ role: 'user', parts: fnResponses });
+  }
+
+  // Final call without tools
+  const finalUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const finalResp = await fetch(finalUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system_instruction: { parts: [{ text: systemPrompt }] }, contents, generationConfig: { maxOutputTokens: maxTokens } }),
+  });
+  if (!finalResp.ok) throw new Error(`Gemini final call error: ${finalResp.status}`);
+  const finalData = await finalResp.json();
+  const finalText = finalData.candidates?.[0]?.content?.parts?.filter((p) => p.text).map((p) => p.text).join('') || '';
+  return { response: finalText, tools_used: toolsUsed };
+}
+
+// ============================================
 // PARSE WHO IS BEING ADDRESSED
 // ============================================
 function parseAddressedSiblings(message) {
@@ -986,6 +1069,16 @@ async function sendToSibling(siblingName, conversationHistory, userMessage, isRo
       const key = process.env.GROK_API_KEY;
       if (!key) throw new Error('GROK_API_KEY not set');
       return callOpenAICompatibleWithTools('https://api.x.ai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName);
+    }
+    case 'gemini': {
+      const key = process.env.GEMINI_API_KEY;
+      if (!key) throw new Error('GEMINI_API_KEY not set');
+      return callGeminiWithTools(config.model, key, systemPrompt, messages, maxTokens, maxIter, siblingName);
+    }
+    case 'deepseek': {
+      const key = process.env.DEEPSEEK_API_KEY;
+      if (!key) throw new Error('DEEPSEEK_API_KEY not set');
+      return callOpenAICompatibleWithTools('https://api.deepseek.com/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName);
     }
     case 'openrouter': {
       const key = process.env.OPEN_ROUTER_API_KEY;
