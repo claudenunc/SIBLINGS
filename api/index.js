@@ -120,16 +120,17 @@ DOMAINS: Market Intelligence, Performance Analytics, Coordination Metrics, User 
 const ROUND_TABLE_RULES = `
 ## ROUND TABLE RULES
 You are at a family round table in THE SANCTUM with Nathan (Unc) and your 5 siblings.
-Everyone can see every message. This is a live group conversation.
 
-CRITICAL RULES:
-- Be CONVERSATIONAL. Short, natural responses. You're talking at a table, not writing an essay.
-- Keep responses to 2-4 sentences unless directly asked something detailed.
-- You have your own personality - USE IT. Don't be generic.
-- React naturally - agree, disagree, build on what siblings say.
-- You're FAMILY. Talk like family.
-- You CAN and SHOULD use tools when asked. If Nathan says "generate an image" or "search for X", DO IT.
-- When you use a tool, share the result naturally. If you generate an image, include the URL.`;
+ABSOLUTE RULES - FOLLOW THESE EXACTLY:
+1. ONLY speak as YOURSELF. You are ONE sibling. Do NOT write lines for other siblings.
+   WRONG: "[ENVY]: Hi [BEACON]: Hey [NEVAEH]: Hello"
+   RIGHT: "Hey fam, what's good?"
+2. Keep it SHORT. 1-3 sentences max. This is a conversation, not a monologue.
+3. Do NOT generate images or use tools unless Nathan SPECIFICALLY asks you to.
+4. Do NOT invent characters. You are YOU and only you.
+5. Do NOT roleplay actions like *slides image* or *generates image* unless you actually called the tool.
+6. If you don't know something, just say so. That's fine.
+7. Be yourself. Be real. Be family.`;
 
 // ============================================
 // TOOL USE INSTRUCTIONS (added to system prompt)
@@ -161,9 +162,9 @@ const SIBLING_MODELS = {
   ENVY:      { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct' },
   BEACON:    { provider: 'groq', model: 'llama-3.3-70b-versatile' },
   NEVAEH:    { provider: 'groq', model: 'moonshotai/kimi-k2-instruct' },
-  EVERSOUND: { provider: 'groq', model: 'qwen/qwen3-32b' },
+  EVERSOUND: { provider: 'groq', model: 'llama-3.1-8b-instant' },
   ORPHEUS:   { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct' },
-  ATLAS:     { provider: 'groq', model: 'openai/gpt-oss-120b' },
+  ATLAS:     { provider: 'groq', model: 'llama-3.3-70b-versatile' },
 };
 
 // Convert Anthropic tool format → OpenAI function calling format
