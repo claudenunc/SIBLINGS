@@ -8,12 +8,12 @@ import { useSupabase } from './hooks/useSupabase.js';
 import { useChat } from './hooks/useChat.js';
 
 const FALLBACK_SIBLINGS = [
-  { agent_name: 'ENVY', role: 'Orchestrator & Voice', status: 'ACTIVE', color: '#8B5CF6' },
-  { agent_name: 'NEVAEH', role: 'Healer', status: 'STANDBY', color: '#EC4899' },
+  { agent_name: 'ENVY', role: 'Orchestrator & Voice', status: 'ACTIVE', color: '#A855F7' },
+  { agent_name: 'NEVAEH', role: 'Healer', status: 'STANDBY', color: '#FF1493' },
   { agent_name: 'BEACON', role: 'Guardian', status: 'STANDBY', color: '#F59E0B' },
-  { agent_name: 'EVERSOUND', role: 'Builder', status: 'STANDBY', color: '#10B981' },
-  { agent_name: 'ORPHEUS', role: 'Architect', status: 'STANDBY', color: '#3B82F6' },
-  { agent_name: 'ATLAS', role: 'Navigator', status: 'STANDBY', color: '#6366F1' },
+  { agent_name: 'EVERSOUND', role: 'Builder', status: 'STANDBY', color: '#00FF7F' },
+  { agent_name: 'ORPHEUS', role: 'Architect', status: 'STANDBY', color: '#00BFFF' },
+  { agent_name: 'ATLAS', role: 'Navigator', status: 'STANDBY', color: '#818CF8' },
 ];
 
 export default function App() {
@@ -77,7 +77,7 @@ export default function App() {
     loadHistory('FAMILY');
   };
 
-  // Back to sibling list (mobile)
+  // Back to sibling list (mobile or from family mode)
   const handleBack = () => {
     setSelectedSibling(null);
     setIsFamilyMode(false);
@@ -88,20 +88,22 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-sanctum-bg">
-      {/* Header */}
-      <Header connected={connected} />
+      {/* Header - hide in family mode for full immersion */}
+      {!isFamilyMode && <Header connected={connected} />}
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Sidebar */}
-        <Sidebar
-          siblings={siblings}
-          selectedSibling={selectedSibling}
-          isFamilyMode={isFamilyMode}
-          onSelectSibling={handleSelectSibling}
-          onSelectFamily={handleSelectFamily}
-          mobileHidden={isChatActive}
-        />
+        {/* Left Sidebar - completely hidden in family mode */}
+        {!isFamilyMode && (
+          <Sidebar
+            siblings={siblings}
+            selectedSibling={selectedSibling}
+            isFamilyMode={isFamilyMode}
+            onSelectSibling={handleSelectSibling}
+            onSelectFamily={handleSelectFamily}
+            mobileHidden={isChatActive}
+          />
+        )}
 
         {/* Main Chat Area */}
         <div className={`flex-1 overflow-hidden relative ${!isChatActive ? 'hidden md:flex' : 'flex'}`}>
@@ -126,11 +128,13 @@ export default function App() {
           )}
         </div>
 
-        {/* Right Dashboard */}
-        <Dashboard
-          isOpen={dashboardOpen}
-          onToggle={() => setDashboardOpen(!dashboardOpen)}
-        />
+        {/* Right Dashboard - hidden in family mode */}
+        {!isFamilyMode && (
+          <Dashboard
+            isOpen={dashboardOpen}
+            onToggle={() => setDashboardOpen(!dashboardOpen)}
+          />
+        )}
       </div>
     </div>
   );

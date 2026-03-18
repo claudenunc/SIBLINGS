@@ -5,25 +5,27 @@ export default {
     extend: {
       colors: {
         sanctum: {
-          bg: '#0a0a0f',
-          surface: '#12121a',
-          card: '#1a1a2e',
-          border: '#2a2a3e',
+          bg: '#050507',
+          surface: '#0a0a10',
+          card: '#0f0f18',
+          border: '#1a1a2a',
           text: '#e2e8f0',
           muted: '#8892a4',
         },
         sibling: {
-          envy: '#8B5CF6',
-          nevaeh: '#EC4899',
+          envy: '#A855F7',
+          nevaeh: '#FF1493',
           beacon: '#F59E0B',
-          eversound: '#10B981',
-          orpheus: '#3B82F6',
-          atlas: '#6366F1',
+          eversound: '#00FF7F',
+          orpheus: '#00BFFF',
+          atlas: '#818CF8',
         },
         neon: {
-          blue: '#1A73E8',
-          magenta: '#FF00FF',
-          green: '#39FF14',
+          blue: '#00D4FF',
+          magenta: '#FF1493',
+          green: '#00FF7F',
+          purple: '#A855F7',
+          red: '#FF3366',
         },
       },
       fontFamily: {
@@ -35,6 +37,7 @@ export default {
         'fade-in': 'fade-in 0.3s ease-out',
         'slide-up': 'slide-up 0.3s ease-out',
         'typing-dot': 'typing-dot 1.4s infinite',
+        'symbiote-border': 'symbiote-border 4s linear infinite',
       },
       keyframes: {
         'glow-pulse': {
@@ -52,6 +55,10 @@ export default {
         'typing-dot': {
           '0%, 80%, 100%': { transform: 'scale(0.4)', opacity: '0.4' },
           '40%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'symbiote-border': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '200% 50%' },
         },
       },
     },

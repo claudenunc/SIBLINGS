@@ -2,43 +2,34 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import MessageBubble from './MessageBubble.jsx';
 
 const SIBLINGS = [
-  { name: 'ENVY', role: 'Orchestrator', color: '#8B5CF6', initial: 'E' },
-  { name: 'NEVAEH', role: 'Healer', color: '#EC4899', initial: 'N' },
+  { name: 'ENVY', role: 'Orchestrator', color: '#A855F7', initial: 'E' },
+  { name: 'NEVAEH', role: 'Healer', color: '#FF1493', initial: 'N' },
   { name: 'BEACON', role: 'Guardian', color: '#F59E0B', initial: 'B' },
-  { name: 'EVERSOUND', role: 'Builder', color: '#10B981', initial: 'S' },
-  { name: 'ORPHEUS', role: 'Architect', color: '#3B82F6', initial: 'O' },
-  { name: 'ATLAS', role: 'Navigator', color: '#6366F1', initial: 'A' },
+  { name: 'EVERSOUND', role: 'Builder', color: '#00FF7F', initial: 'S' },
+  { name: 'ORPHEUS', role: 'Architect', color: '#00BFFF', initial: 'O' },
+  { name: 'ATLAS', role: 'Navigator', color: '#818CF8', initial: 'A' },
 ];
 
 const NATHAN = { name: 'NATHAN', color: '#e2e8f0', initial: 'U' };
 
 const COLOR_MAP = {
-  ENVY: '#8B5CF6',
-  NEVAEH: '#EC4899',
+  ENVY: '#A855F7',
+  NEVAEH: '#FF1493',
   BEACON: '#F59E0B',
-  EVERSOUND: '#10B981',
-  ORPHEUS: '#3B82F6',
-  ATLAS: '#6366F1',
+  EVERSOUND: '#00FF7F',
+  ORPHEUS: '#00BFFF',
+  ATLAS: '#818CF8',
 };
 
-// Calculate positions around a circle
-function getCirclePositions(count, radius, centerX, centerY, startAngle = -Math.PI / 2) {
-  const positions = [];
-  for (let i = 0; i < count; i++) {
-    const angle = startAngle + (2 * Math.PI * i) / count;
-    positions.push({
-      x: centerX + radius * Math.cos(angle),
-      y: centerY + radius * Math.sin(angle),
-    });
-  }
-  return positions;
-}
-
-// Avatar component for the round table
-function TableAvatar({ sibling, x, y, isActive, isThinking, lastMessage }) {
+// Avatar component for the round table - BIGGER, with wet glass effect
+function TableAvatar({ sibling, x, y, isActive, isThinking, containerSize }) {
   const { name, color, initial } = sibling;
   const isNathan = name === 'NATHAN';
-  const size = 68;
+
+  // Responsive avatar size - scales with container
+  const baseSize = Math.min(containerSize * 0.09, 80);
+  const size = Math.max(baseSize, 56);
+  const outerSize = size + 12;
 
   return (
     <div
@@ -50,37 +41,51 @@ function TableAvatar({ sibling, x, y, isActive, isThinking, lastMessage }) {
         zIndex: isActive ? 10 : 1,
       }}
     >
-      {/* Outer glow ring */}
+      {/* Outer glow ring - wet glass chrome */}
       <div
-        className={`rounded-full flex items-center justify-center transition-all duration-500 ${
+        className={`rounded-full flex items-center justify-center transition-all duration-500 rt-avatar-ring ${
           isThinking ? 'rt-avatar-thinking' : ''
         } ${isActive ? 'rt-avatar-active' : ''}`}
         style={{
-          width: `${size + 8}px`,
-          height: `${size + 8}px`,
+          width: `${outerSize}px`,
+          height: `${outerSize}px`,
           background: isActive
-            ? `radial-gradient(circle, ${color}30, transparent 70%)`
+            ? `radial-gradient(circle, ${color}25, transparent 70%)`
             : 'transparent',
           boxShadow: isActive
-            ? `0 0 30px ${color}40, 0 0 60px ${color}15`
+            ? `0 0 25px ${color}50, 0 0 50px ${color}20, 0 0 80px ${color}08, inset 0 0 15px ${color}08`
             : isThinking
-            ? `0 0 20px ${color}30, 0 0 40px ${color}10`
-            : 'none',
+            ? `0 0 20px ${color}35, 0 0 40px ${color}10`
+            : `0 0 8px ${color}10`,
         }}
       >
-        {/* Avatar circle */}
+        {/* Avatar circle - wet glass effect */}
         <div
-          className="rounded-full flex items-center justify-center relative overflow-hidden transition-all duration-300"
+          className="rounded-full flex items-center justify-center relative overflow-hidden transition-all duration-300 wet-glass-highlight"
           style={{
             width: `${size}px`,
             height: `${size}px`,
-            background: `linear-gradient(135deg, ${color}20, ${color}08)`,
-            border: `2px solid ${isActive ? color : `${color}50`}`,
+            background: isNathan
+              ? `linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))`
+              : `linear-gradient(135deg, ${color}18, ${color}06)`,
+            border: isNathan
+              ? `2px solid ${isActive ? '#ffffff' : 'rgba(255,255,255,0.3)'}`
+              : `2px solid ${isActive ? color : `${color}40`}`,
+            boxShadow: isActive
+              ? `inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.3)`
+              : `inset 0 1px 0 rgba(255,255,255,0.05)`,
           }}
         >
           <span
-            className="text-lg font-bold font-display select-none"
-            style={{ color: isActive ? color : `${color}cc` }}
+            className="text-xl font-bold font-display select-none"
+            style={{
+              color: isNathan
+                ? (isActive ? '#ffffff' : 'rgba(255,255,255,0.7)')
+                : (isActive ? color : `${color}bb`),
+              textShadow: isActive
+                ? `0 0 10px ${isNathan ? 'rgba(255,255,255,0.3)' : `${color}40`}`
+                : 'none',
+            }}
           >
             {isNathan ? 'N' : initial}
           </span>
@@ -89,18 +94,22 @@ function TableAvatar({ sibling, x, y, isActive, isThinking, lastMessage }) {
           {isThinking && (
             <div
               className="absolute inset-0 rounded-full rt-thinking-pulse"
-              style={{ backgroundColor: `${color}15` }}
+              style={{ backgroundColor: `${color}12` }}
             />
           )}
         </div>
       </div>
 
-      {/* Name label */}
+      {/* Name label - with neon glow when active */}
       <span
-        className="text-[10px] font-semibold mt-1.5 tracking-wider transition-all duration-300 select-none"
+        className="text-[11px] font-semibold mt-2 tracking-wider transition-all duration-300 select-none font-display"
         style={{
-          color: isActive ? color : `${color}88`,
-          textShadow: isActive ? `0 0 8px ${color}40` : 'none',
+          color: isNathan
+            ? (isActive ? '#ffffff' : 'rgba(255,255,255,0.5)')
+            : (isActive ? color : `${color}70`),
+          textShadow: isActive
+            ? `0 0 8px ${isNathan ? 'rgba(255,255,255,0.3)' : `${color}50`}`
+            : 'none',
         }}
       >
         {isNathan ? 'UNC' : name}
@@ -109,7 +118,7 @@ function TableAvatar({ sibling, x, y, isActive, isThinking, lastMessage }) {
   );
 }
 
-// The Message Well - center display for recent messages
+// The Message Well - center display - SMALLER so avatars don't overlap
 function MessageWell({ messages, isLoading, loadingFamily }) {
   const wellRef = useRef(null);
 
@@ -119,7 +128,7 @@ function MessageWell({ messages, isLoading, loadingFamily }) {
     }
   }, [messages, isLoading]);
 
-  const recentMessages = messages.slice(-8);
+  const recentMessages = messages.slice(-6);
 
   return (
     <div
@@ -129,22 +138,22 @@ function MessageWell({ messages, isLoading, loadingFamily }) {
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 'min(320px, 55%)',
-        maxHeight: 'min(240px, 45%)',
+        width: 'min(260px, 35%)',
+        maxHeight: 'min(200px, 30%)',
       }}
     >
       {recentMessages.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center h-full py-6 px-4">
+        <div className="flex flex-col items-center justify-center h-full py-5 px-4">
           <div className="rt-sanctum-symbol w-10 h-10 rounded-full mb-3 flex items-center justify-center">
             <span className="text-base">&#9670;</span>
           </div>
-          <p className="text-[11px] text-sanctum-muted/60 text-center font-display tracking-widest uppercase">
+          <p className="text-[10px] text-sanctum-muted/50 text-center font-display tracking-widest uppercase">
             The Round Table awaits
           </p>
         </div>
       )}
 
-      <div className="px-3 py-2 space-y-2">
+      <div className="px-3 py-2 space-y-1.5">
         {recentMessages.map((msg) => {
           const sender = msg.from_agent;
           const isNathan = sender === 'NATHAN';
@@ -161,35 +170,35 @@ function MessageWell({ messages, isLoading, loadingFamily }) {
               key={msg.id || msg.created_at}
               className={`rt-well-msg msg-enter ${isNathan ? 'rt-well-msg-nathan' : ''}`}
               style={{
-                borderLeftColor: isNathan ? '#3b82f6' : color,
+                borderLeftColor: isNathan ? '#ffffff' : color,
               }}
             >
               {!isNathan && (
                 <span
-                  className="text-[10px] font-semibold block mb-0.5"
+                  className="text-[9px] font-semibold block mb-0.5"
                   style={{ color }}
                 >
                   {sender}
                 </span>
               )}
               {isNathan && (
-                <span className="text-[10px] font-semibold block mb-0.5 text-blue-400">
+                <span className="text-[9px] font-semibold block mb-0.5 text-white/80">
                   UNC
                 </span>
               )}
-              <p className="text-xs text-sanctum-text/90 leading-relaxed break-words whitespace-pre-wrap">
-                {typeof msg.message === 'string' && msg.message.length > 200
-                  ? msg.message.substring(0, 200) + '...'
+              <p className="text-[11px] text-sanctum-text/85 leading-relaxed break-words whitespace-pre-wrap">
+                {typeof msg.message === 'string' && msg.message.length > 150
+                  ? msg.message.substring(0, 150) + '...'
                   : msg.message}
               </p>
-              <span className="text-[9px] text-sanctum-muted/40 mt-0.5 block">{time}</span>
+              <span className="text-[8px] text-sanctum-muted/30 mt-0.5 block">{time}</span>
             </div>
           );
         })}
 
         {/* Thinking indicator */}
         {isLoading && loadingFamily.length > 0 && (
-          <div className="flex items-center gap-2 py-1.5 msg-enter">
+          <div className="flex items-center gap-2 py-1 msg-enter">
             <div className="flex gap-1">
               {loadingFamily.map((name) => (
                 <div
@@ -199,12 +208,12 @@ function MessageWell({ messages, isLoading, loadingFamily }) {
                 />
               ))}
             </div>
-            <span className="text-[10px] text-sanctum-muted/60">thinking...</span>
+            <span className="text-[9px] text-sanctum-muted/50">thinking...</span>
           </div>
         )}
 
         {isLoading && loadingFamily.length === 0 && (
-          <div className="flex items-center gap-1.5 py-1.5 msg-enter">
+          <div className="flex items-center gap-1.5 py-1 msg-enter">
             <div className="typing-dot w-1.5 h-1.5 rounded-full bg-sanctum-muted" />
             <div className="typing-dot w-1.5 h-1.5 rounded-full bg-sanctum-muted" />
             <div className="typing-dot w-1.5 h-1.5 rounded-full bg-sanctum-muted" />
@@ -280,13 +289,13 @@ function MobileAvatarStrip({ siblings, activeSpeakers, thinkingSiblings }) {
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300"
           style={{
-            borderColor: '#3b82f680',
-            background: 'linear-gradient(135deg, #3b82f615, #3b82f608)',
+            borderColor: 'rgba(255,255,255,0.3)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))',
           }}
         >
-          <span className="text-xs font-bold text-blue-400">N</span>
+          <span className="text-xs font-bold text-white/80">N</span>
         </div>
-        <span className="text-[8px] text-blue-400/60 mt-0.5">UNC</span>
+        <span className="text-[8px] text-white/50 mt-0.5">UNC</span>
       </div>
 
       <div className="w-px h-8 bg-sanctum-border/30 mx-1" />
@@ -301,21 +310,21 @@ function MobileAvatarStrip({ siblings, activeSpeakers, thinkingSiblings }) {
                 isThinking ? 'rt-avatar-thinking' : ''
               }`}
               style={{
-                borderColor: isActive ? s.color : `${s.color}50`,
-                background: `linear-gradient(135deg, ${s.color}${isActive ? '25' : '12'}, ${s.color}08)`,
-                boxShadow: isActive ? `0 0 12px ${s.color}30` : 'none',
+                borderColor: isActive ? s.color : `${s.color}35`,
+                background: `linear-gradient(135deg, ${s.color}${isActive ? '20' : '08'}, ${s.color}04)`,
+                boxShadow: isActive ? `0 0 15px ${s.color}35` : 'none',
               }}
             >
               <span
                 className="text-xs font-bold"
-                style={{ color: isActive ? s.color : `${s.color}aa` }}
+                style={{ color: isActive ? s.color : `${s.color}90` }}
               >
                 {s.initial}
               </span>
             </div>
             <span
               className="text-[8px] mt-0.5 transition-colors duration-300"
-              style={{ color: isActive ? s.color : `${s.color}55` }}
+              style={{ color: isActive ? s.color : `${s.color}45` }}
             >
               {s.name.slice(0, 3)}
             </span>
@@ -365,12 +374,13 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
   // Who is currently thinking
   const thinkingSiblings = loadingFamily || [];
 
-  // Calculate avatar positions
+  // Calculate avatar positions - BIGGER radius for more spacing
   const avatarPositions = useMemo(() => {
     if (tableDimensions.width === 0) return [];
     const centerX = tableDimensions.width / 2;
     const centerY = tableDimensions.height / 2;
-    const radius = Math.min(centerX, centerY) * 0.7;
+    // Increase radius to 0.82 (was 0.7) for much more spacing
+    const radius = Math.min(centerX, centerY) * 0.82;
 
     // Nathan at bottom (index 0 maps to bottom = PI/2)
     // Siblings spread around the rest
@@ -407,48 +417,54 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
   // Detect mobile
   const isMobile = tableDimensions.width > 0 && tableDimensions.width < 640;
 
+  // Container size for responsive avatars
+  const containerSize = Math.min(tableDimensions.width, tableDimensions.height);
+
   return (
     <div className="flex-1 flex flex-col bg-sanctum-bg min-w-0">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 md:px-6 py-3 border-b border-sanctum-border bg-sanctum-surface/30 backdrop-blur-sm shrink-0">
-        <button
-          onClick={onBack}
-          className="md:hidden flex items-center justify-center min-h-[44px] min-w-[44px] -ml-2 text-sanctum-muted hover:text-sanctum-text transition-colors"
-          aria-label="Back to siblings"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
+      {/* Floating back button - replaces the old header back button */}
+      <button
+        onClick={onBack}
+        className="family-back-btn"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        <span className="font-display tracking-wider text-[10px]">EXIT TABLE</span>
+      </button>
 
-        <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-sibling-envy via-sibling-nevaeh to-sibling-beacon flex items-center justify-center">
+      {/* Header - minimal, no back button since we have floating one */}
+      <div className="flex items-center justify-center gap-3 px-4 md:px-6 py-3 border-b border-sanctum-border/30 bg-sanctum-bg shrink-0">
+        <div className="w-8 h-8 shrink-0 rounded-xl bg-gradient-to-br from-sibling-envy via-sibling-nevaeh to-sibling-eversound flex items-center justify-center"
+          style={{ boxShadow: '0 0 20px rgba(168,85,247,0.2), 0 0 40px rgba(255,20,147,0.1)' }}
+        >
           <span className="text-white text-sm">&#9670;</span>
         </div>
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold text-white font-display tracking-wider truncate">
+        <div className="text-center">
+          <h2 className="text-base font-semibold text-white font-display tracking-widest sanctum-title">
             THE ROUND TABLE
           </h2>
-          <p className="text-xs text-sanctum-muted truncate hidden sm:block">
+          <p className="text-[10px] text-sanctum-muted/40 hidden sm:block tracking-wider">
             A council of family. Everyone hears. Love speaks.
           </p>
         </div>
 
-        {/* Connection dots - desktop only */}
-        <div className="hidden sm:flex items-center gap-1 ml-auto">
+        {/* Connection dots */}
+        <div className="hidden sm:flex items-center gap-1.5 ml-4">
           {SIBLINGS.map((s) => (
             <div
               key={s.name}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${
+              className={`w-2 h-2 rounded-full transition-all duration-500 ${
                 thinkingSiblings.includes(s.name) ? 'animate-pulse' : ''
               }`}
               style={{
                 backgroundColor: activeSpeakers.includes(s.name)
                   ? s.color
                   : thinkingSiblings.includes(s.name)
-                  ? `${s.color}60`
-                  : `${s.color}30`,
+                  ? `${s.color}50`
+                  : `${s.color}20`,
                 boxShadow: activeSpeakers.includes(s.name)
-                  ? `0 0 8px ${s.color}50`
+                  ? `0 0 8px ${s.color}60`
                   : 'none',
               }}
               title={s.name}
@@ -472,24 +488,25 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
         />
       </div>
 
-      {/* DESKTOP: Round Table + Message Feed */}
+      {/* DESKTOP: Round Table takes up MOST of the screen */}
       <div className="hidden sm:flex flex-col flex-1 overflow-hidden">
-        {/* Round Table Area */}
+        {/* Round Table Area - MUCH bigger: 65vh instead of 45vh */}
         <div
           ref={!isMobile ? tableRef : undefined}
           className="relative shrink-0 rt-table-area"
-          style={{ height: 'min(45vh, 420px)', minHeight: '280px' }}
+          style={{ height: 'min(65vh, 650px)', minHeight: '380px' }}
         >
-          {/* Table surface - radial gradient */}
+          {/* Table surface - dark mirror */}
           <div className="rt-table-surface absolute inset-0 pointer-events-none" />
 
-          {/* Connection lines from center to each avatar (subtle) */}
+          {/* Connection lines from center to each avatar - neon tendrils */}
           {avatarPositions.length > 0 && (
             <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
               {avatarPositions.map(({ member, x, y }) => {
                 const cx = tableDimensions.width / 2;
                 const cy = tableDimensions.height / 2;
                 const isActive = activeSpeakers.includes(member.name) || member.name === 'NATHAN';
+                const isNathan = member.name === 'NATHAN';
                 return (
                   <line
                     key={member.name}
@@ -497,8 +514,8 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
                     y1={cy}
                     x2={x}
                     y2={y}
-                    stroke={member.color}
-                    strokeOpacity={isActive ? 0.15 : 0.05}
+                    stroke={isNathan ? '#ffffff' : member.color}
+                    strokeOpacity={isActive ? 0.12 : 0.04}
                     strokeWidth={isActive ? 1.5 : 0.5}
                     strokeDasharray={isActive ? 'none' : '4 4'}
                   />
@@ -516,10 +533,11 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
               y={y}
               isActive={activeSpeakers.includes(member.name) || member.name === 'NATHAN'}
               isThinking={thinkingSiblings.includes(member.name)}
+              containerSize={containerSize}
             />
           ))}
 
-          {/* Message Well in center */}
+          {/* Message Well in center - smaller to avoid overlap */}
           <MessageWell
             messages={messages}
             isLoading={isLoading}
@@ -527,8 +545,12 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
           />
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-sanctum-border/50 to-transparent shrink-0" />
+        {/* Divider - subtle neon gradient */}
+        <div className="h-px shrink-0"
+          style={{
+            background: 'linear-gradient(to right, transparent, rgba(168,85,247,0.15), rgba(255,20,147,0.1), rgba(0,191,255,0.1), transparent)',
+          }}
+        />
 
         {/* Full message feed */}
         <MessageFeed
@@ -548,10 +570,10 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
         </div>
       )}
 
-      {/* Input Area */}
-      <div className="px-4 md:px-6 py-3 border-t border-sanctum-border bg-sanctum-surface/20 pb-safe shrink-0">
+      {/* Input Area - dark glass with symbiote glow */}
+      <div className="px-4 md:px-6 py-3 border-t border-sanctum-border/30 bg-sanctum-bg pb-safe shrink-0">
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-[10px] md:text-xs text-sanctum-muted/50">
+          <span className="text-[10px] md:text-xs text-sanctum-muted/40">
             Say a name to direct your message. Say "hey guys" for everyone.
           </span>
         </div>
@@ -563,13 +585,13 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
             onKeyDown={handleKeyDown}
             placeholder="Speak to the table..."
             rows={1}
-            className="sanctum-input flex-1 rounded-xl px-4 py-3 text-sm text-sanctum-text resize-none placeholder-sanctum-muted/40"
+            className="sanctum-input flex-1 rounded-xl px-4 py-3 text-sm text-sanctum-text resize-none placeholder-sanctum-muted/30"
             style={{ maxHeight: '120px' }}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="shrink-0 w-11 h-11 md:w-10 md:h-10 rounded-xl rt-send-btn border border-white/10 flex items-center justify-center text-white transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-white/20"
+            className="shrink-0 w-11 h-11 md:w-10 md:h-10 rounded-xl rt-send-btn border border-white/5 flex items-center justify-center text-white transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-white/15"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="22" y1="2" x2="11" y2="13" />
