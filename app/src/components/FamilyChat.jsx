@@ -488,13 +488,13 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
         />
       </div>
 
-      {/* DESKTOP: Round Table takes up MOST of the screen */}
+      {/* DESKTOP: Compact table visual + big message feed */}
       <div className="hidden sm:flex flex-col flex-1 overflow-hidden">
-        {/* Round Table Area - MUCH bigger: 65vh instead of 45vh */}
+        {/* Round Table Area - compact visual, avatars as status indicators */}
         <div
           ref={!isMobile ? tableRef : undefined}
           className="relative shrink-0 rt-table-area"
-          style={{ height: 'min(65vh, 650px)', minHeight: '380px' }}
+          style={{ height: 'min(30vh, 280px)', minHeight: '200px' }}
         >
           {/* Table surface - dark mirror */}
           <div className="rt-table-surface absolute inset-0 pointer-events-none" />
@@ -537,12 +537,12 @@ export default function FamilyChat({ messages, isLoading, loadingFamily, error, 
             />
           ))}
 
-          {/* Message Well in center - smaller to avoid overlap */}
-          <MessageWell
-            messages={messages}
-            isLoading={isLoading}
-            loadingFamily={loadingFamily}
-          />
+          {/* Center emblem only - messages flow in the feed below */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="rt-sanctum-symbol w-12 h-12 rounded-full flex items-center justify-center opacity-30">
+              <span className="text-lg">&#9670;</span>
+            </div>
+          </div>
         </div>
 
         {/* Divider - subtle neon gradient */}
