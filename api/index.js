@@ -1098,7 +1098,9 @@ async function sendToSibling(siblingName, conversationHistory, userMessage, isRo
     case 'groq': {
       const key = process.env.GROQ_API_KEY;
       if (!key) throw new Error('GROQ_API_KEY not set');
-      return callOpenAICompatibleWithTools('https://api.groq.com/openai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, OPENAI_TOOLS, maxIter, siblingName);
+      // Skip tools in round table - Groq models get confused by [NAME]: format in history
+      const tools = isRoundTable ? [] : OPENAI_TOOLS;
+      return callOpenAICompatibleWithTools('https://api.groq.com/openai/v1/chat/completions', key, config.model, systemPrompt, messages, maxTokens, tools, maxIter, siblingName);
     }
     case 'gemini': {
       const key = process.env.GEMINI_API_KEY;
