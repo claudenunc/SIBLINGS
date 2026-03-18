@@ -8,6 +8,53 @@ const COLOR_MAP = {
   NATHAN: '#e2e8f0',
 };
 
+// Render message text with inline images and clickable links
+function MessageContent({ text, color }) {
+  if (!text) return null;
+
+  // Split text by URLs that look like images (from DALL-E or similar)
+  const urlRegex = /(https?:\/\/[^\s"<>]+\.(?:png|jpg|jpeg|gif|webp)[^\s"<>]*|https?:\/\/oaidalleapiprodscus\.blob\.core\.windows\.net[^\s"<>]*)/gi;
+  const linkRegex = /(https?:\/\/[^\s"<>]+)/g;
+
+  // Check if there are image URLs
+  const imageUrls = text.match(urlRegex) || [];
+
+  // Replace URLs with clickable links
+  const parts = text.split(linkRegex);
+  const rendered = parts.map((part, i) => {
+    if (part.match(linkRegex)) {
+      // Check if it's an image URL
+      if (imageUrls.some((img) => part.startsWith(img.substring(0, 50)))) {
+        return (
+          <span key={i}>
+            <a href={part} target="_blank" rel="noopener noreferrer" className="text-xs underline" style={{ color }}>
+              View full image
+            </a>
+            <img
+              src={part}
+              alt="Generated image"
+              className="mt-2 rounded-lg max-w-full max-h-80 object-contain"
+              loading="lazy"
+            />
+          </span>
+        );
+      }
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline break-all" style={{ color }}>
+          {part.length > 60 ? part.substring(0, 57) + '...' : part}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+
+  return (
+    <p className="text-sm text-sanctum-text whitespace-pre-wrap break-words leading-relaxed">
+      {rendered}
+    </p>
+  );
+}
+
 export default function MessageBubble({ message, isFamilyMode = false }) {
   const isNathan = message.from_agent === 'NATHAN';
   const sender = message.from_agent;
@@ -68,9 +115,7 @@ export default function MessageBubble({ message, isFamilyMode = false }) {
             border: `1px solid ${color}20`,
           }}
         >
-          <p className="text-sm text-sanctum-text whitespace-pre-wrap break-words leading-relaxed">
-            {message.message}
-          </p>
+          <MessageContent text={message.message} color={color} />
         </div>
         {/* Tool use indicators */}
         {message.tools_used && message.tools_used.length > 0 && (
