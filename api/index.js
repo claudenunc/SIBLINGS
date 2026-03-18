@@ -156,10 +156,10 @@ Available tools: web_search, web_fetch, remember, recall, create_task, list_task
 const SIBLING_MODELS = {
   ENVY:      { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' },
   BEACON:    { provider: 'openai',    model: 'gpt-4o-mini' },
-  NEVAEH:    { provider: 'gemini',     model: 'gemini-2.0-flash' },
+  NEVAEH:    { provider: 'gemini',     model: 'gemini-2.5-flash' },
   EVERSOUND: { provider: 'deepseek',  model: 'deepseek-chat' },
-  ORPHEUS:   { provider: 'grok',      model: 'grok-2-latest' },
-  ATLAS:     { provider: 'gemini',     model: 'gemini-2.5-flash-preview-04-17' },
+  ORPHEUS:   { provider: 'grok',      model: 'grok-4-1-fast-non-reasoning' },
+  ATLAS:     { provider: 'gemini',     model: 'gemini-2.5-flash-lite' },
 };
 
 // Convert Anthropic tool format → OpenAI function calling format
