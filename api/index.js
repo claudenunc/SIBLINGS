@@ -647,6 +647,7 @@ async function toolGenerateImage({ prompt, size = '1024x1024' }) {
   if (!apiKey) return JSON.stringify({ error: 'OPENAI_API_KEY not configured' });
 
   try {
+    // 1. Generate with DALL-E (returns temporary URL)
     const resp = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -657,9 +658,33 @@ async function toolGenerateImage({ prompt, size = '1024x1024' }) {
       throw new Error(`OpenAI error: ${resp.status} - ${err}`);
     }
     const data = await resp.json();
-    const imageUrl = data.data?.[0]?.url;
+    const tempUrl = data.data?.[0]?.url;
     const revisedPrompt = data.data?.[0]?.revised_prompt;
-    return JSON.stringify({ generated: true, image_url: imageUrl, revised_prompt: revisedPrompt });
+    if (!tempUrl) throw new Error('No image URL returned');
+
+    // 2. Download the image
+    const imgResp = await fetch(tempUrl);
+    if (!imgResp.ok) throw new Error('Failed to download generated image');
+    const imgBuffer = await imgResp.arrayBuffer();
+
+    // 3. Upload to Supabase Storage (permanent URL)
+    if (supabase) {
+      const filename = `img_${Date.now()}.png`;
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from('sanctum-images')
+        .upload(filename, Buffer.from(imgBuffer), { contentType: 'image/png', upsert: true });
+
+      if (!uploadErr && uploadData) {
+        const { data: urlData } = supabase.storage.from('sanctum-images').getPublicUrl(filename);
+        const permanentUrl = urlData?.publicUrl;
+        if (permanentUrl) {
+          return JSON.stringify({ generated: true, image_url: permanentUrl, revised_prompt: revisedPrompt });
+        }
+      }
+    }
+
+    // Fallback: return temporary URL if storage fails
+    return JSON.stringify({ generated: true, image_url: tempUrl, revised_prompt: revisedPrompt, note: 'Temporary URL - may expire' });
   } catch (err) {
     return JSON.stringify({ error: err.message });
   }
