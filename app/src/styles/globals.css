@@ -191,3 +191,160 @@ body {
 .alert-low {
   border-left-color: #6b7280;
 }
+
+/* ========================================
+   ROUND TABLE - Spatial Interface
+   ======================================== */
+
+/* Table surface - the radial gradient "table" in the center */
+.rt-table-surface {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(26, 26, 46, 0.6) 0%, transparent 55%),
+    radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 40%);
+}
+
+/* Subtle animated ring on the table */
+.rt-table-area::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(70%, 500px);
+  height: min(70%, 500px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+  animation: rt-ring-breathe 8s ease-in-out infinite;
+}
+
+.rt-table-area::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(45%, 320px);
+  height: min(45%, 320px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  pointer-events: none;
+  animation: rt-ring-breathe 8s ease-in-out infinite 4s;
+}
+
+@keyframes rt-ring-breathe {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.02);
+  }
+}
+
+/* Avatar thinking state - pulsing border */
+.rt-avatar-thinking {
+  animation: rt-think-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rt-think-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(1.2);
+  }
+}
+
+/* Active avatar inner glow */
+.rt-avatar-active {
+  animation: rt-active-glow 3s ease-in-out infinite;
+}
+
+@keyframes rt-active-glow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+/* Thinking pulse overlay inside avatar */
+.rt-thinking-pulse {
+  animation: rt-inner-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes rt-inner-pulse {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Message Well styling */
+.rt-message-well {
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+.rt-message-well::-webkit-scrollbar {
+  width: 3px;
+}
+
+.rt-message-well::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+/* Individual messages in the well */
+.rt-well-msg {
+  border-left: 2px solid;
+  padding: 6px 10px;
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s ease;
+}
+
+.rt-well-msg:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rt-well-msg-nathan {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Sanctum symbol in empty well */
+.rt-sanctum-symbol {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Send button gradient */
+.rt-send-btn {
+  background: linear-gradient(135deg,
+    rgba(139, 92, 246, 0.25),
+    rgba(236, 72, 153, 0.2),
+    rgba(245, 158, 11, 0.15)
+  );
+}
+
+.rt-send-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg,
+    rgba(139, 92, 246, 0.4),
+    rgba(236, 72, 153, 0.35),
+    rgba(245, 158, 11, 0.25)
+  );
+  box-shadow:
+    0 0 15px rgba(139, 92, 246, 0.15),
+    0 0 15px rgba(236, 72, 153, 0.1);
+}

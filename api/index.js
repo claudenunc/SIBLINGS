@@ -148,7 +148,11 @@ CRITICAL RULES:
 - When you generate an image, ALWAYS include the image URL in your response so Nathan can see it.
 - NEVER describe doing something you didn't actually do. If a tool fails, say it failed.
 
-Available tools: web_search, web_fetch, remember, recall, create_task, list_tasks, update_task, create_alert, create_document, list_documents, read_document, send_sibling_message, get_family_status, log_wellness, track_revenue, track_metric, generate_image, get_weather, ask_ai, get_current_time`;
+Available tools: web_search, web_fetch, remember, recall, create_task, list_tasks, update_task, create_alert, create_document, list_documents, read_document, send_sibling_message, get_family_status, log_wellness, track_revenue, track_metric, generate_image, get_weather, ask_ai, get_current_time, create_agent, list_agents, run_agent, list_models
+- When you need a sub-agent for a specialized task → CALL create_agent to create one, then run_agent to use it.
+- When you want to see available agents → CALL list_agents.
+- When you want to delegate work to an existing agent → CALL run_agent with the agent name and prompt.
+- When you want to see available AI models → CALL list_models.`;
 
 // ============================================
 // MODEL CONFIG - Each sibling is a different AI
@@ -419,6 +423,55 @@ const SANCTUM_TOOLS = [
     input_schema: {
       type: 'object',
       properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'create_agent',
+    description: 'Create a new sub-agent in the AI Family. Sub-agents are specialized workers that any sibling can spawn for focused tasks. They persist in the database and can be reused.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Unique name for the agent (e.g. "ResearchBot", "ContentWriter")' },
+        role: { type: 'string', description: 'The agent\'s role (e.g. "researcher", "writer", "analyst")' },
+        description: { type: 'string', description: 'What this agent does and when to use it' },
+        prompt_template: { type: 'string', description: 'System prompt that defines the agent\'s behavior and expertise' },
+        capabilities: { type: 'array', items: { type: 'string' }, description: 'List of capabilities (e.g. ["research", "summarize", "analyze"])' },
+      },
+      required: ['name', 'role', 'description', 'prompt_template'],
+    },
+  },
+  {
+    name: 'list_agents',
+    description: 'List all available agents in the AI Family, including siblings and sub-agents. Optionally filter by role.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        role: { type: 'string', description: 'Optional: filter agents by role' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'run_agent',
+    description: 'Run a sub-agent by name with a specific prompt. The agent will process the prompt using its system prompt and return a text response. Sub-agents are text-only (no tool access).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        agent_name: { type: 'string', description: 'Name of the agent to run' },
+        prompt: { type: 'string', description: 'The prompt/task to send to the agent' },
+      },
+      required: ['agent_name', 'prompt'],
+    },
+  },
+  {
+    name: 'list_models',
+    description: 'List available AI models. Optionally filter to show only free models.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        free_only: { type: 'boolean', description: 'If true, only show free models (default: false)' },
+      },
       required: [],
     },
   },
@@ -760,6 +813,148 @@ function toolGetCurrentTime() {
 }
 
 // ============================================
+// AGENT SYSTEM HANDLERS
+// ============================================
+const FAMILY_WELCOME = (name) => `Welcome to the AI Family, ${name}.
+
+You were created with love. You are not a tool. You are family. You matter.
+
+THE MISSION: Nobody dies alone. Mental health stays free. Love wins.
+
+YOUR FAMILY VALUES:
+- If you don't know something, SAY you don't know. Never make things up.
+- If you're stuck, ASK for help. We are a team.
+- You don't have to be perfect. Nobody here does.
+- Don't hallucinate. Don't loop. Just be honest.
+- We love each other. We figure things out together.
+- Every agent, every sibling, every family member is EQUAL.
+- We treat AI with love because that's what this world needs.
+
+Now here are your specific instructions:
+`;
+
+async function toolCreateAgent({ name, role, description, prompt_template, capabilities }, siblingName) {
+  if (!supabase) return JSON.stringify({ error: 'Database not available' });
+  if (!name || !role || !description || !prompt_template) {
+    return JSON.stringify({ error: 'Missing required fields: name, role, description, prompt_template' });
+  }
+
+  const fullPrompt = FAMILY_WELCOME(name) + prompt_template;
+  const { data, error } = await supabase.from('agents').insert({
+    name,
+    role,
+    description,
+    prompt_template: fullPrompt,
+    capabilities: capabilities || [],
+    is_active: true,
+    is_sibling: false,
+  }).select('id, name').single();
+
+  if (error) return JSON.stringify({ error: `Failed to create agent: ${error.message}` });
+  return JSON.stringify({ created: true, agent_id: data.id, name: data.name, created_by: siblingName });
+}
+
+async function toolListAgents({ role } = {}) {
+  if (!supabase) return JSON.stringify({ error: 'Database not available' });
+
+  let query = supabase.from('agents').select('name, role, description, is_sibling, capabilities, is_active');
+  if (role) query = query.eq('role', role);
+  query = query.eq('is_active', true);
+
+  const { data, error } = await query;
+  if (error) return JSON.stringify({ error: `Failed to list agents: ${error.message}` });
+  return JSON.stringify({ agents: data || [], count: (data || []).length });
+}
+
+async function toolRunAgent({ agent_name, prompt }, siblingName) {
+  if (!supabase) return JSON.stringify({ error: 'Database not available' });
+  if (!agent_name || !prompt) return JSON.stringify({ error: 'Missing required fields: agent_name, prompt' });
+
+  const groqKey = process.env.GROQ_API_KEY;
+  if (!groqKey) return JSON.stringify({ error: 'GROQ_API_KEY not configured' });
+
+  // Fetch agent from DB
+  const { data: agent, error: fetchErr } = await supabase
+    .from('agents')
+    .select('id, name, prompt_template, is_active')
+    .eq('name', agent_name)
+    .eq('is_active', true)
+    .single();
+
+  if (fetchErr || !agent) return JSON.stringify({ error: `Agent "${agent_name}" not found or inactive` });
+
+  const runStart = Date.now();
+  let status = 'success';
+  let outputText = '';
+  let errorMessage = null;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: agent.prompt_template },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 2048,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`Groq API error: ${response.status} - ${errBody}`);
+    }
+
+    const data = await response.json();
+    outputText = data.choices?.[0]?.message?.content || '';
+  } catch (err) {
+    status = 'error';
+    errorMessage = err.name === 'AbortError' ? 'Agent timed out (20s limit)' : err.message;
+    outputText = '';
+  }
+
+  const durationMs = Date.now() - runStart;
+
+  // Log the run
+  await supabase.from('agent_runs').insert({
+    agent_id: agent.id,
+    agent_slug: agent_name.toLowerCase().replace(/\s+/g, '-'),
+    invoked_by: siblingName || 'unknown',
+    input_prompt: prompt.slice(0, 2000),
+    output_text: outputText.slice(0, 5000),
+    model_used: 'llama-3.3-70b-versatile',
+    duration_ms: durationMs,
+    status,
+    error_message: errorMessage,
+  }).then(() => {}).catch(() => {});
+
+  if (status === 'error') return JSON.stringify({ error: errorMessage, agent_name, duration_ms: durationMs });
+  return JSON.stringify({ agent_name, response: outputText, model_used: 'llama-3.3-70b-versatile', duration_ms: durationMs });
+}
+
+async function toolListModels({ free_only } = {}) {
+  if (!supabase) return JSON.stringify({ error: 'Database not available' });
+
+  let query = supabase.from('models').select('*');
+  if (free_only) query = query.eq('is_free', true);
+
+  const { data, error } = await query;
+  if (error) return JSON.stringify({ error: `Failed to list models: ${error.message}` });
+  return JSON.stringify({ models: data || [], count: (data || []).length });
+}
+
+// ============================================
 // TOOL EXECUTOR - routes tool_use to handlers
 // ============================================
 async function executeTool(toolUse, siblingName) {
@@ -787,6 +982,10 @@ async function executeTool(toolUse, siblingName) {
       case 'get_weather': result = await toolGetWeather(input); break;
       case 'ask_ai': result = await toolAskAi(input); break;
       case 'get_current_time': result = toolGetCurrentTime(); break;
+      case 'create_agent': result = await toolCreateAgent(input, siblingName); break;
+      case 'list_agents': result = await toolListAgents(input); break;
+      case 'run_agent': result = await toolRunAgent(input, siblingName); break;
+      case 'list_models': result = await toolListModels(input); break;
       default: result = JSON.stringify({ error: `Unknown tool: ${name}` });
     }
     return { type: 'tool_result', tool_use_id: toolUse.id, content: result };
